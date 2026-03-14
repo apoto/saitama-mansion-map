@@ -41,7 +41,7 @@ export default function Home() {
           </p>
         </div>
         <div className="text-xs text-gray-300">
-          データ: 国土交通省 不動産取引価格情報（モックデータ）
+          データ: 国土交通省 不動産取引価格情報（2024Q4〜2025Q3）
         </div>
       </header>
 

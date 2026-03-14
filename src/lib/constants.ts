@@ -3,7 +3,7 @@ import type { PriceRange } from "./types";
 export const SAITAMA_CENTER = { lat: 35.87, lng: 139.62 } as const;
 export const DEFAULT_ZOOM = 11;
 
-export const YEARS = ["2025", "2024", "2023", "2022", "2021", "2020"] as const;
+export const YEARS = ["2025", "2024"] as const;
 
 export const AGE_CATEGORIES = [
   { value: "all", label: "すべて" },
@@ -37,4 +37,5 @@ export const AREA_ORDER = [
   "朝霞・新座・和光",
   "上尾・桶川・北本",
   "熊谷・深谷・本庄",
+  "その他",
 ] as const;
