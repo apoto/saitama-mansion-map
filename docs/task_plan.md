@@ -59,7 +59,7 @@
 - [x] T-201: プロンプト設計（5年推移 + 築年数別 + 4観点分析）
 - [x] T-202: @google/genai SDK 導入
 - [x] T-203: StationDetail 生成ボタン + ストリーミング表示 + 24hキャッシュ
-- [ ] T-204: Vercel環境変数 GOOGLE_API_KEY 設定（デプロイ時）
+- [x] T-204: GOOGLE_API_KEY 設定・動作確認済み（Vercel設定はデプロイ時）
 - [x] T-052: レートリミット（1時間10回、localStorage管理）
 
 #### 3B. AIコンシェルジュ

@@ -73,7 +73,7 @@
 - [x] **T-201** プロンプト設計: 直近5年推移 + 築年数別内訳 → 200字・自然文
 - [x] **T-202** LLM連携: @google/genai SDK（Gemini 2.5 Flash）
 - [x] **T-203** StationDetail: 生成ボタン + ストリーミング表示 + 24hキャッシュ
-- [ ] **T-204** Vercel環境変数 `GOOGLE_API_KEY` 設定（デプロイ時に実施）
+- [x] **T-204** `GOOGLE_API_KEY` を `.env.local` に設定・動作確認済み（Vercel環境変数はデプロイ時に設定）
 
 ### 3B. AIエリア提案（物件コンシェルジュ）← NEW
 
