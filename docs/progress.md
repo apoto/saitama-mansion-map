@@ -36,3 +36,30 @@
 ### ブロッカー・注意点
 - T-120はPythonスクリプトの改修 + 既存CSVデータが手元にあることが前提
 - スクリプトの場所・データの場所を最初に確認してから着手すること
+
+---
+
+## 2026-03-15 セッション②: Phase 2C 取引詳細ドロワー本実装
+
+### 完了したこと
+- planning-with-files体制の導入（task_plan.md / findings.md / progress.md）
+- **T-120**: process_data.py に `write_transactions()` 追加
+  - load_csv() に取引詳細フィールド追加（price/area/unitPrice/age/floorPlan/structure/district/period/walkMinutes）
+  - `public/transactions/R{code}.json` を148駅分出力
+- **T-123**: StationDetail でfetch遅延読み込み実装（キャンセル対応）
+- **T-124**: 選択中築年数カテゴリに合致する行をハイライト + カラムソート機能
+- types.ts に `Transaction` インターフェース追加
+
+### コミット
+- `c1371d9` docs: planning-with-filesパターンで3ファイル体制を導入
+- `5929fa5` feat: Phase 2C 取引詳細ドロワー本実装 (T-120/123/124)
+
+### 次のセッションでやること
+- ブラウザで取引ドロワーの動作確認（駅クリック → 取引一覧表示）
+- 問題なければ次フェーズの優先順位を決定
+  - T-300: デプロイ（Vercel公開）← Phase 2完了でリリース可能
+  - T-130: 過去データ追加（CSVダウンロード必要）
+  - T-200: AIエリア傾向分析
+
+### ブロッカー・注意点
+- 特になし。デプロイかAI機能かは次セッションで方針確認
