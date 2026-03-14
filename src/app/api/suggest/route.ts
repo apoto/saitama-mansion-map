@@ -116,6 +116,15 @@ function matchStations(conditions: ParsedConditions): { station: typeof stationD
       // 取引件数（データ充実度）
       score += Math.min(15, stats.count / 5);
 
+      // 徒歩分数条件
+      if (conditions.maxWalkMinutes !== null && station.medianWalkMinutes !== undefined) {
+        if (station.medianWalkMinutes <= conditions.maxWalkMinutes) {
+          score += 15 * (1 - station.medianWalkMinutes / conditions.maxWalkMinutes);
+        } else {
+          score -= 20 * ((station.medianWalkMinutes - conditions.maxWalkMinutes) / conditions.maxWalkMinutes);
+        }
+      }
+
       // エリアキーワードマッチ
       if (conditions.preferredAreas.length > 0) {
         const haystack = `${station.stationName} ${station.area} ${station.lines.join(" ")}`;

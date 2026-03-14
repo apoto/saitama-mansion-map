@@ -1,6 +1,6 @@
 "use client";
 
-import { MapContainer, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer, LayersControl } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import StationMarkers from "./StationMarkers";
 import type { StationData, FilterState } from "@/lib/types";
@@ -25,6 +25,14 @@ export default function MapView({ stations, filter, onStationClick, highlightedS
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      {filter.showHazard && (
+        <TileLayer
+          url="https://disaportal.gsi.go.jp/hazardmap/hazardmaptile/v2/0/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://disaportal.gsi.go.jp/">国土交通省 ハザードマップポータルサイト</a>'
+          opacity={0.6}
+          zIndex={400}
+        />
+      )}
       <StationMarkers
         stations={stations}
         filter={filter}

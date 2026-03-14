@@ -103,6 +103,22 @@ export default function FilterPanel({ filter, onChange }: Props) {
         </div>
       </div>
 
+      {/* ハザードマップ */}
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => onChange({ ...filter, showHazard: !filter.showHazard })}
+          className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all border ${
+            filter.showHazard
+              ? "bg-blue-50 text-blue-700 border-blue-300"
+              : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
+          }`}
+          title="国土交通省 洪水浸水想定区域を表示"
+        >
+          <span>🌊</span>
+          <span>ハザード</span>
+        </button>
+      </div>
+
       {/* 価格帯 */}
       <div className="flex items-center gap-1.5 ml-auto">
         <span className="text-xs font-medium text-gray-500 whitespace-nowrap">価格帯</span>

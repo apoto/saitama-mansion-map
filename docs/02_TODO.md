@@ -30,10 +30,8 @@
 
 ### 2B. 面積切り替え ✅ 完了（フロントエンド計算で対応）
 
-- [ ] **T-110** データモデル変更: stations.ts を㎡単価ベースに変更（将来のスクリプト更新時に対応）
-  - `avgPrice70` → `avgUnitPrice`（万円/㎡）
-  - `medianPrice70` → `medianUnitPrice`（万円/㎡）
-- [ ] **T-111** process_data.py: ㎡単価で集計するよう修正（T-110と同時）
+- ~~**T-110** データモデル変更: stations.ts を㎡単価ベースに変更~~ → **廃止**: `price70 / 70 * targetArea` のクライアント計算で完結。再生成不要。
+- ~~**T-111** process_data.py: ㎡単価で集計するよう修正~~ → **廃止**: 同上。
 - [x] **T-112** FilterPanel: 面積トグルボタン追加（50/60/70/80/90㎡）
 - [x] **T-113** FilterState型変更: `targetArea: number` を追加（デフォルト70）
 - [x] **T-114** utils.ts / 表示コンポーネント: `price70 / 70 * targetArea` でクライアント換算表示

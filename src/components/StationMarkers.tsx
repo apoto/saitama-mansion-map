@@ -66,7 +66,7 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
                   </span>
                   <span className="text-gray-500">{filter.targetArea}㎡換算（平均）</span>
                   <span className="text-right">{formatPrice(displayAvg)}円</span>
-                  <span className="text-gray-500">取引件数</span>
+                  <span className="text-gray-500">取引件数（データ充実度）</span>
                   <span className="text-right">{stats.count}件</span>
                 </div>
                 {onStationClick && (

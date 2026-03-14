@@ -32,6 +32,8 @@ export interface StationData {
   lines: string[];
   area: string;
   years: Record<string, StationYearData>;
+  /** 駅徒歩分数の中央値（万円）。stations.ts 再生成後に有効 */
+  medianWalkMinutes?: number;
 }
 
 export interface Transaction {
@@ -54,4 +56,6 @@ export interface FilterState {
   /** 表示基準面積 (㎡)。デフォルト70 */
   targetArea: number;
   visiblePriceRanges: Set<PriceRange>;
+  /** ハザードマップ（洪水浸水想定区域）を重畳表示するか */
+  showHazard: boolean;
 }

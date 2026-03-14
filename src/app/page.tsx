@@ -27,6 +27,7 @@ export default function Home() {
     ageCategories: new Set(),
     targetArea: 70,
     visiblePriceRanges: ALL_PRICE_RANGES,
+    showHazard: false,
   });
 
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null);

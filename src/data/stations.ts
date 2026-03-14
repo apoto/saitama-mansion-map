@@ -62898,8 +62898,8 @@ export const stationData: StationData[] =
   {
     "stationCode": "R0109",
     "stationName": "金町",
-    "lat": 35.309366,
-    "lng": 136.798178,
+    "lat": 35.765339,
+    "lng": 139.864489,
     "lines": [],
     "area": "越谷・草加・三郷",
     "years": {
@@ -85978,8 +85978,8 @@ export const stationData: StationData[] =
   {
     "stationCode": "R0149",
     "stationName": "大泉学園",
-    "lat": 35.420725,
-    "lng": 136.771616,
+    "lat": 35.749084,
+    "lng": 139.598963,
     "lines": [],
     "area": "朝霞・新座・和光",
     "years": {
@@ -90594,8 +90594,8 @@ export const stationData: StationData[] =
   {
     "stationCode": "R0157",
     "stationName": "保谷",
-    "lat": 34.881486,
-    "lng": 136.943993,
+    "lat": 35.741093,
+    "lng": 139.570292,
     "lines": [],
     "area": "朝霞・新座・和光",
     "years": {

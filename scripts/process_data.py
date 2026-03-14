@@ -203,6 +203,7 @@ def aggregate(records: list[dict]) -> dict:
         "display": "",
         "municipalities": set(),
         "years": defaultdict(lambda: defaultdict(list)),
+        "walk_minutes": [],
     })
 
     for r in records:
@@ -213,6 +214,8 @@ def aggregate(records: list[dict]) -> dict:
         year = r["year"]
         s["years"][year]["all"].append(r["price_70"])
         s["years"][year][r["age_cat"]].append(r["price_70"])
+        if r["walk_minutes"] is not None:
+            s["walk_minutes"].append(r["walk_minutes"])
 
     return stations
 
@@ -436,7 +439,10 @@ def main():
             continue
 
         code = f"R{i:04d}"
-        result.append({
+        walk_list = sdata["walk_minutes"]
+        median_walk = round(statistics.median(walk_list)) if walk_list else None
+
+        entry: dict = {
             "stationCode": code,
             "stationName": display,
             "lat": round(lat, 6),
@@ -444,7 +450,11 @@ def main():
             "lines": [],
             "area": area,
             "years": years_obj,
-        })
+        }
+        if median_walk is not None:
+            entry["medianWalkMinutes"] = median_walk
+
+        result.append(entry)
 
         if (i + 1) % 20 == 0:
             print(f"  ... {i + 1}/{len(stations)} processed")
