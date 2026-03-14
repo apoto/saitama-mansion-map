@@ -95,6 +95,7 @@ export default function Home() {
         station={selectedStation}
         filter={filter}
         onClose={() => setSelectedStation(null)}
+        allStations={stations}
       />
 
       {/* AI Concierge panel */}

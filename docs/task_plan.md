@@ -73,8 +73,10 @@
 - [x] T-215: マップハイライト（提案駅を青枠＋拡大、他駅を透明化）
 - [x] T-216: localStorageキャッシュ（24h TTL）
 
-#### 3C. 沿線別価格推移グラフ
-- [ ] T-220〜222: recharts でグラフ表示
+#### 3C. 沿線別価格推移グラフ ✅ 完了
+- [x] T-220: buildTrendData() — 駅×路線×年度の時系列集計ロジック（utils.ts）
+- [x] T-221: PriceTrendChart コンポーネント（recharts LineChart、路線比較切替）
+- [x] T-222: StationDetail ドロワーに統合（数値サマリと取引一覧の間）
 
 ### ⏳ Phase 4: デプロイ・公開
 - [ ] T-300〜304: GitHub / Vercel 公開

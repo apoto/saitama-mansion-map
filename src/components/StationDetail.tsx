@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import type { StationData, FilterState, Transaction } from "@/lib/types";
 import { getDisplayPrice, formatPrice } from "@/lib/utils";
+
+const PriceTrendChart = lazy(() => import("./PriceTrendChart"));
 
 interface Props {
   station: StationData | null;
   filter: FilterState;
   onClose: () => void;
+  allStations: StationData[];
 }
 
 const AGE_LABELS: Record<string, string> = {
@@ -78,7 +81,7 @@ function checkRateLimit(): { allowed: boolean; remaining: number } {
 
 // ────────────────────────────────────────────────────────────
 
-export default function StationDetail({ station, filter, onClose }: Props) {
+export default function StationDetail({ station, filter, onClose, allStations }: Props) {
   const [visible, setVisible] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);
@@ -341,7 +344,19 @@ export default function StationDetail({ station, filter, onClose }: Props) {
             </div>
           )}
 
-          {/* ③ 取引一覧 */}
+          {/* ③ 価格推移グラフ */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">価格推移グラフ</h3>
+            <Suspense fallback={<div className="text-xs text-gray-400 py-4 text-center">グラフを読み込み中...</div>}>
+              <PriceTrendChart
+                station={station}
+                allStations={allStations}
+                targetArea={filter.targetArea}
+              />
+            </Suspense>
+          </div>
+
+          {/* ④ 取引一覧 */}
           <div className="px-4 py-3">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-700">
