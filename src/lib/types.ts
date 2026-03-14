@@ -34,6 +34,19 @@ export interface StationData {
   years: Record<string, StationYearData>;
 }
 
+export interface Transaction {
+  price: number;         // 取引価格（万円）
+  area: number;          // 面積（㎡）
+  unitPrice: number;     // ㎡単価（万円）
+  buildingYear: number | null;
+  age: number | null;    // 築年数
+  floorPlan: string;
+  structure: string;
+  district: string;
+  period: string;        // 取引時期（例: "2025年第3四半期"）
+  walkMinutes: number | null;
+}
+
 export interface FilterState {
   year: string;
   /** 空Set = すべての築年数を表示 */

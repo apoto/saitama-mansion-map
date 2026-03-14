@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-国土交通省 不動産取引価格情報CSV → stations.ts 変換スクリプト
+国土交通省 不動産取引価格情報CSV → stations.ts + transactions JSON 変換スクリプト
 
 Usage:
   python3 scripts/process_data.py <input_csv_path>
 
 Output:
-  src/data/stations.ts (TypeScript)
-  scripts/geocode_cache.json (座標キャッシュ)
+  src/data/stations.ts              (TypeScript: 駅別集計データ)
+  public/transactions/{code}.json   (JSON: 駅別個別取引データ)
+  scripts/geocode_cache.json        (座標キャッシュ)
 """
 
 import csv
@@ -143,7 +144,7 @@ def load_csv(path: str) -> list[dict]:
                 continue
 
             try:
-                price = int(row["取引価格（総額）"])
+                price_raw = int(row["取引価格（総額）"])
                 area = float(row["面積（㎡）"])
             except (ValueError, KeyError):
                 continue
@@ -151,20 +152,40 @@ def load_csv(path: str) -> list[dict]:
             if area <= 0:
                 continue
 
-            price_70 = price / area * 70 / 10000  # 万円換算
+            price_man = price_raw / 10000          # 万円
+            unit_price = round(price_man / area, 2) # 万円/㎡
+            price_70 = price_man / area * 70        # 70㎡換算（万円）
 
             building_year = parse_building_year(row.get("建築年", ""))
             year = parse_period_year(row.get("取引時期", ""))
             municipality = row.get("市区町村名", "")
 
+            # 徒歩分数
+            walk_str = row.get("最寄駅：距離（分）", "").strip()
+            try:
+                walk_minutes = int(walk_str)
+            except (ValueError, TypeError):
+                walk_minutes = None
+
             records.append({
+                # 集計用
                 "station_raw": station,
                 "station_display": normalize_station_name(station),
                 "municipality": municipality,
                 "price_70": price_70,
-                "building_year": building_year,
                 "age_cat": age_category(building_year),
                 "year": year,
+                # 取引詳細用
+                "price": round(price_man),
+                "area": area,
+                "unit_price": unit_price,
+                "building_year": building_year,
+                "age": (REFERENCE_YEAR - building_year) if building_year else None,
+                "floor_plan": row.get("間取り", "").strip(),
+                "structure": row.get("建物の構造", "").strip(),
+                "district": row.get("地区名", "").strip(),
+                "period": row.get("取引時期", "").strip(),
+                "walk_minutes": walk_minutes,
             })
     return records
 
@@ -174,22 +195,6 @@ def load_csv(path: str) -> list[dict]:
 # ──────────────────────────────────────────────
 
 def aggregate(records: list[dict]) -> dict:
-    """
-    Returns: {
-      station_raw: {
-        "display": str,
-        "municipalities": set,
-        "lines": set,  (empty for now)
-        "years": {
-          "2024": {
-            "all": [prices],
-            "age_0_10": [prices],
-            ...
-          }
-        }
-      }
-    }
-    """
     stations = defaultdict(lambda: {
         "display": "",
         "municipalities": set(),
@@ -310,6 +315,58 @@ def generate_ts(station_list: list[dict], output_path: str):
 
 
 # ──────────────────────────────────────────────
+# Step 6: 駅別取引JSON出力（T-120）
+# ──────────────────────────────────────────────
+
+def write_transactions(result: list[dict], records: list[dict], output_dir: Path) -> int:
+    """
+    駅別の個別取引データを public/transactions/{stationCode}.json に出力する。
+    各ファイルは取引時期の降順でソートされたリスト。
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # stationName → stationCode のマップ
+    code_map = {s["stationName"]: s["stationCode"] for s in result}
+
+    # station_display → 取引レコードリスト
+    station_records: dict[str, list] = defaultdict(list)
+    for r in records:
+        display = r["station_display"]
+        if display in code_map:
+            station_records[display].append(r)
+
+    written = 0
+    for station in result:
+        name = station["stationName"]
+        code = station["stationCode"]
+        txs = station_records.get(name, [])
+
+        transactions = []
+        for r in sorted(txs, key=lambda x: x["period"], reverse=True):
+            transactions.append({
+                "price": r["price"],
+                "area": r["area"],
+                "unitPrice": r["unit_price"],
+                "buildingYear": r["building_year"],
+                "age": r["age"],
+                "floorPlan": r["floor_plan"],
+                "structure": r["structure"],
+                "district": r["district"],
+                "period": r["period"],
+                "walkMinutes": r["walk_minutes"],
+            })
+
+        out_path = output_dir / f"{code}.json"
+        out_path.write_text(
+            json.dumps(transactions, ensure_ascii=False),
+            "utf-8"
+        )
+        written += 1
+
+    return written
+
+
+# ──────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────
 
@@ -319,23 +376,25 @@ def main():
         sys.exit(1)
 
     csv_path = sys.argv[1]
-    output_path = Path(__file__).parent.parent / "src" / "data" / "stations.ts"
+    root = Path(__file__).parent.parent
+    output_path = root / "src" / "data" / "stations.ts"
+    transactions_dir = root / "public" / "transactions"
 
-    print(f"[1/5] Loading CSV: {csv_path}")
+    print(f"[1/6] Loading CSV: {csv_path}")
     records = load_csv(csv_path)
     print(f"  → {len(records)} records loaded")
 
-    print(f"[2/5] Aggregating by station...")
+    print(f"[2/6] Aggregating by station...")
     stations = aggregate(records)
     print(f"  → {len(stations)} unique stations")
 
-    print(f"[3/5] Geocoding stations (Nominatim, ~1s per station)...")
+    print(f"[3/6] Geocoding stations (Nominatim, ~1s per station)...")
     cache = load_geocode_cache()
     cached_count = sum(1 for s in stations if normalize_station_name(s) in cache)
     need_geocode = len(stations) - cached_count
     print(f"  → {cached_count} cached, {need_geocode} to geocode (~{need_geocode}s)")
 
-    print(f"[4/5] Building station data...")
+    print(f"[4/6] Building station data...")
     all_years = sorted(set(r["year"] for r in records if r["year"]))
     print(f"  → Years in data: {all_years}")
 
@@ -386,16 +445,21 @@ def main():
     if skipped:
         print(f"  → {len(skipped)} skipped: {skipped[:10]}{'...' if len(skipped) > 10 else ''}")
 
-    print(f"[5/5] Writing {output_path}")
+    print(f"[5/6] Writing {output_path}")
     generate_ts(result, str(output_path))
     print(f"  → Done! {len(result)} stations written")
+
+    print(f"[6/6] Writing transaction JSONs → {transactions_dir}/")
+    written = write_transactions(result, records, transactions_dir)
+    print(f"  → {written} files written")
 
     # Summary
     print(f"\n=== Summary ===")
     print(f"  Records: {len(records)}")
     print(f"  Stations: {len(result)}")
     print(f"  Years: {all_years}")
-    print(f"  Output: {output_path}")
+    print(f"  Output (stations): {output_path}")
+    print(f"  Output (transactions): {transactions_dir}/ ({written} files)")
 
 
 if __name__ == "__main__":
