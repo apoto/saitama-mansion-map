@@ -107,3 +107,34 @@
 ### ブロッカー・注意点
 - ローカル動作には `.env.local` に `GOOGLE_API_KEY=...` が必要
 - Vercel デプロイ時も同様に環境変数を設定すること（T-204）
+
+---
+
+## 2026-03-15 セッション⑤: Phase 3B AIコンシェルジュ実装
+
+### 完了したこと
+- **T-210〜216**: AIエリア提案コンシェルジュ フル実装
+  - `/api/suggest` APIルート（Node.js Runtime、3ステップ処理）
+    - Step 1: `parseConditions()` — Gemini 2.5 Flash で自然言語 → 構造化JSON
+    - Step 2: `matchStations()` — 175駅をスコアリング（価格/エリア/件数）
+    - Step 3: `generateExplanations()` — 上位8候補 → おすすめ3〜5駅＋理由
+  - `SuggestPanel.tsx` コンポーネント（モーダルUI）
+    - テキストエリア入力 + 例文クイック選択
+    - 提案カード（駅名/価格/路線/理由/マップで見るボタン）
+    - 解析された条件バッジ表示
+    - 24h localStorageキャッシュ
+  - `StationMarkers.tsx`: `highlightedStations` prop追加
+    - 提案駅: 青枠＋拡大表示
+    - 非提案駅: opacity 0.1 に透明化
+  - `MapView.tsx`: `highlightedStations` prop を StationMarkers に中継
+  - `page.tsx`: ヘッダーに「✨ AIエリア提案」ボタン追加、全コンポーネント統合
+
+### コミット
+- (このセッション後に作成)
+
+### 次のセッションでやること
+- **T-300〜304**: Vercel デプロイ（ユーザーが対応予定）
+- 余力があれば T-220〜222（沿線別グラフ）
+
+### ブロッカー・注意点
+- Vercel 環境変数 `GOOGLE_API_KEY` を設定しないと AI 機能が動かない

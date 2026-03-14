@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import FilterPanel from "@/components/FilterPanel";
 import AreaList from "@/components/AreaList";
 import StationDetail from "@/components/StationDetail";
+import SuggestPanel from "@/components/SuggestPanel";
 import { stationData } from "@/data/stations";
 import type { FilterState, PriceRange, StationData } from "@/lib/types";
 import { PRICE_RANGES } from "@/lib/constants";
@@ -29,6 +30,8 @@ export default function Home() {
   });
 
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [highlightedStations, setHighlightedStations] = useState<Set<string>>(new Set());
 
   const stations = useMemo(() => stationData, []);
 
@@ -44,10 +47,18 @@ export default function Home() {
             駅別 {filter.targetArea}㎡換算価格 × 取引件数
           </p>
         </div>
-        <div className="flex flex-col items-end gap-0.5">
+        <div className="flex flex-col items-end gap-1.5">
           <div className="text-xs text-gray-400">
             データ: 国土交通省 不動産取引価格情報
           </div>
+          {/* AIコンシェルジュボタン */}
+          <button
+            onClick={() => setSuggestOpen(true)}
+            className="inline-flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-full px-3 py-1 text-xs font-medium transition-colors shadow-sm"
+          >
+            <span>✨</span>
+            <span>AIエリア提案</span>
+          </button>
           {/* データ鮮度バッジ (T-051) */}
           <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -65,6 +76,7 @@ export default function Home() {
           stations={stations}
           filter={filter}
           onStationClick={setSelectedStation}
+          highlightedStations={highlightedStations}
         />
       </div>
 
@@ -82,6 +94,18 @@ export default function Home() {
         station={selectedStation}
         filter={filter}
         onClose={() => setSelectedStation(null)}
+      />
+
+      {/* AI Concierge panel */}
+      <SuggestPanel
+        open={suggestOpen}
+        onClose={() => setSuggestOpen(false)}
+        onSelectStation={(station) => {
+          setSelectedStation(station);
+          setSuggestOpen(false);
+        }}
+        onHighlight={setHighlightedStations}
+        stations={stations}
       />
     </div>
   );

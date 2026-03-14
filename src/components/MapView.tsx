@@ -10,9 +10,10 @@ interface Props {
   stations: StationData[];
   filter: FilterState;
   onStationClick?: (station: StationData) => void;
+  highlightedStations?: Set<string>;
 }
 
-export default function MapView({ stations, filter, onStationClick }: Props) {
+export default function MapView({ stations, filter, onStationClick, highlightedStations }: Props) {
   return (
     <MapContainer
       center={[SAITAMA_CENTER.lat, SAITAMA_CENTER.lng]}
@@ -24,7 +25,12 @@ export default function MapView({ stations, filter, onStationClick }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <StationMarkers stations={stations} filter={filter} onStationClick={onStationClick} />
+      <StationMarkers
+        stations={stations}
+        filter={filter}
+        onStationClick={onStationClick}
+        highlightedStations={highlightedStations}
+      />
     </MapContainer>
   );
 }

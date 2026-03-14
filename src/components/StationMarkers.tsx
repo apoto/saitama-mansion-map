@@ -15,9 +15,11 @@ interface Props {
   stations: StationData[];
   filter: FilterState;
   onStationClick?: (station: StationData) => void;
+  highlightedStations?: Set<string>;
 }
 
-export default function StationMarkers({ stations, filter, onStationClick }: Props) {
+export default function StationMarkers({ stations, filter, onStationClick, highlightedStations }: Props) {
+  const hasHighlight = highlightedStations && highlightedStations.size > 0;
   return (
     <>
       {stations.map((station) => {
@@ -30,18 +32,20 @@ export default function StationMarkers({ stations, filter, onStationClick }: Pro
         const color = getPriceColor(displayPrice);
         const radius = getMarkerRadius(stats.count);
         const displayAvg = getDisplayPrice(stats.avgPrice70, filter.targetArea);
+        const isHighlighted = hasHighlight && highlightedStations!.has(station.stationCode);
+        const dimmed = hasHighlight && !isHighlighted;
 
         return (
           <CircleMarker
             key={station.stationCode}
             center={[station.lat, station.lng]}
-            radius={radius}
+            radius={isHighlighted ? radius + 4 : radius}
             pathOptions={{
               fillColor: color,
-              color: color,
-              weight: 2,
-              opacity: 0.9,
-              fillOpacity: 0.55,
+              color: isHighlighted ? "#1d4ed8" : color,
+              weight: isHighlighted ? 3 : 2,
+              opacity: dimmed ? 0.2 : 0.9,
+              fillOpacity: dimmed ? 0.1 : isHighlighted ? 0.75 : 0.55,
             }}
             eventHandlers={
               onStationClick
