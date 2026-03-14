@@ -11,14 +11,20 @@
 - [x] **T-021** マップ・フィルタ・エリアリスト・ホバーポップアップ実装
 - [x] **T-022** 国交省実データ反映（7,625件 → 148駅）
 
+## Phase 1後: 品質・信頼性改善（チームレビューより追加）
+
+- [ ] **T-050** geocode_cache.jsonの座標精度を全駅目視確認、誤差駅を手動修正
+- [ ] **T-051** UIにデータ鮮度バッジを追加（「2025Q3時点のデータ」を常時表示）
+- [ ] **T-052** Phase 3 AI機能にリクエストレートリミット実装（ユーザー/日単位）
+
 ---
 
 ## Phase 2: フィルタ強化 + 取引詳細
 
 ### 2A. 築年数マルチ選択
 
-- [ ] **T-100** FilterPanel: 築年数をドロップダウン → チェックボックス（複数選択可）に変更
-- [ ] **T-101** FilterState型変更: `ageCategory: AgeCategory` → `ageCategories: Set<AgeCategory>`
+- [ ] **T-100** FilterPanel: 築年数をドロップダウン → **トグルチップ（複数選択可）** に変更（チェックボックスより押しやすく、SP対応も見据えた`<button>`ベース）
+- [ ] **T-101** FilterState型変更: `ageCategory: AgeCategory` → `ageCategories: Set<AgeCategoryKey>`（空Set=すべて）
 - [ ] **T-102** utils.ts: 複数カテゴリの集計マージロジック追加（件数合計、価格は加重平均）
 - [ ] **T-103** StationMarkers / AreaList: マージ後のstatsで描画
 
@@ -75,6 +81,8 @@
 - [ ] **T-204** Vercel環境変数にAPIキー設定
 
 ### 3B. AIエリア提案（物件コンシェルジュ）← NEW
+
+> **依存関係**: T-210以降はT-120（取引JSONファイル生成）が完了している必要がある。
 
 - [ ] **T-210** Next.js API Route: `/api/suggest` エンドポイント作成
 - [ ] **T-211** 条件解析プロンプト設計: 自然言語 → structured JSON（価格/築年数/面積/間取り等）
