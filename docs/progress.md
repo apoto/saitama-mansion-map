@@ -138,3 +138,39 @@
 
 ### ブロッカー・注意点
 - Vercel 環境変数 `GOOGLE_API_KEY` を設定しないと AI 機能が動かない
+
+---
+
+## 2026-03-15 セッション⑥: 第2回チームレビュー + レビュー対応
+
+### 完了したこと
+- 第2回チームレビュー実施 → `04_チームレビューレポート_第2回.md` 作成
+- **B-01 (T-050完了)**: 座標精度確認・修正
+  - `check_coordinates.py` 作成（埼玉県境界ボックスで自動検出）
+  - 誤座標3駅を修正: 金町・大泉学園・保谷（名古屋近辺 → 正しい東京近郊座標）
+  - geocode_cache.json + stations.ts 両方更新
+- **B-05**: AIコンシェルジュに徒歩分数スコアリング追加
+  - process_data.py: `medianWalkMinutes` を集計・出力
+  - types.ts: `StationData` に `medianWalkMinutes?` フィールド追加
+  - suggest/route.ts: `maxWalkMinutes` 条件をスコアに反映
+  - ※stations.ts の再生成で完全有効化（次回CSV処理時）
+- **B-07**: マーカーツールチップ「取引件数（データ充実度）」に文言修正
+- **B-08 (T-500前倒し)**: ハザードマップトグル追加
+  - FilterState に `showHazard: boolean` 追加
+  - FilterPanel に「🌊 ハザード」トグルボタン追加
+  - MapView: 国交省洪水浸水想定区域タイルを条件付き重畳
+- **B-09**: T-110/111をTODOから廃止（フロント計算で解決済みと明示）
+- **B-02**: `next build` 確認 → 成功。最大チャンク996KB（gzip後〜250KB）、問題なし
+
+### コミット
+- `ad59a31` docs: 第2回チームレビューレポートを追加
+- `72d2dc7` fix/feat: 第2回チームレビュー対応 (B-01/05/07/08/09)
+
+### 次のセッションでやること
+- **T-300〜304**: Vercel デプロイ（ユーザーが対応予定）
+- **B-03**: OG画像作成（Canvaでスクリーンショットベース）
+- **B-06**: Google AI Studio Usageアラート設定
+
+### ブロッカー・注意点
+- stations.ts の `medianWalkMinutes` は次回 process_data.py 実行後に有効化される
+- ハザードマップタイルURL（国交省）が本番で正常に表示されるか要確認（デプロイ後）
