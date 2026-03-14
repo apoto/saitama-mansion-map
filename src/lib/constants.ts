@@ -3,7 +3,12 @@ import type { PriceRange, AgeCategoryKey } from "./types";
 export const SAITAMA_CENTER = { lat: 35.87, lng: 139.62 } as const;
 export const DEFAULT_ZOOM = 11;
 
-export const YEARS = ["2025", "2024"] as const;
+export const YEARS = [
+  "2025", "2024", "2023", "2022", "2021", "2020",
+  "2019", "2018", "2017", "2016", "2015", "2014",
+  "2013", "2012", "2011", "2010", "2009", "2008",
+  "2007", "2006", "2005",
+] as const;
 
 export const AGE_CATEGORY_OPTIONS: { value: AgeCategoryKey; label: string }[] = [
   { value: "age_0_10", label: "築10年以内" },

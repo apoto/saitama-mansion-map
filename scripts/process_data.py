@@ -3,7 +3,11 @@
 国土交通省 不動産取引価格情報CSV → stations.ts + transactions JSON 変換スクリプト
 
 Usage:
-  python3 scripts/process_data.py <input_csv_path>
+  # 単一ファイル
+  python3 scripts/process_data.py data/raw/foo.csv
+
+  # 複数ファイル（glob展開）
+  python3 scripts/process_data.py data/raw/*_中古マンション.csv
 
 Output:
   src/data/stations.ts              (TypeScript: 駅別集計データ)
@@ -372,17 +376,21 @@ def write_transactions(result: list[dict], records: list[dict], output_dir: Path
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 process_data.py <csv_path>")
+        print("Usage: python3 process_data.py <csv_path> [csv_path2 ...]")
         sys.exit(1)
 
-    csv_path = sys.argv[1]
+    csv_paths = sys.argv[1:]
     root = Path(__file__).parent.parent
     output_path = root / "src" / "data" / "stations.ts"
     transactions_dir = root / "public" / "transactions"
 
-    print(f"[1/6] Loading CSV: {csv_path}")
-    records = load_csv(csv_path)
-    print(f"  → {len(records)} records loaded")
+    print(f"[1/6] Loading {len(csv_paths)} CSV file(s)...")
+    records = []
+    for csv_path in sorted(csv_paths):
+        batch = load_csv(csv_path)
+        print(f"  {Path(csv_path).name}: {len(batch)} records")
+        records.extend(batch)
+    print(f"  → {len(records)} records total")
 
     print(f"[2/6] Aggregating by station...")
     stations = aggregate(records)
