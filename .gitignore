@@ -42,3 +42,4 @@ next-env.d.ts
 
 # raw data (large CSVs - keep locally, don't push)
 # data/raw/*.csv
+.env.local
