@@ -67,16 +67,13 @@
 
 ## Phase 3: AIサマリ + エリア深掘り
 
-### 3A. AIエリア傾向分析
+### 3A. AIエリア傾向分析 ✅ 完了
 
-- [ ] **T-200** Next.js API Route: `/api/summary` エンドポイント作成
-- [ ] **T-201** プロンプト設計: 駅の取引データ → 傾向分析テキスト（200字）
-  - 価格帯特徴 / 築年数別傾向 / 周辺比較 / 購入アドバイス
-- [ ] **T-202** LLM連携: OpenAI or Claude API呼び出し
-- [ ] **T-203** StationDetail: 「AI傾向分析」セクション追加
-  - [生成]ボタン → ストリーミング表示
-  - localStorageキャッシュ（24h）
-- [ ] **T-204** Vercel環境変数にAPIキー設定
+- [x] **T-200** Next.js API Route: `/api/summary` (Edge Runtime, Gemini 2.5 Flash ストリーミング)
+- [x] **T-201** プロンプト設計: 直近5年推移 + 築年数別内訳 → 200字・自然文
+- [x] **T-202** LLM連携: @google/genai SDK（Gemini 2.5 Flash）
+- [x] **T-203** StationDetail: 生成ボタン + ストリーミング表示 + 24hキャッシュ
+- [ ] **T-204** Vercel環境変数 `GOOGLE_API_KEY` 設定（デプロイ時に実施）
 
 ### 3B. AIエリア提案（物件コンシェルジュ）← NEW
 
