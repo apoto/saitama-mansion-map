@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# raw data (large CSVs - keep locally, don't push)
+# data/raw/*.csv
