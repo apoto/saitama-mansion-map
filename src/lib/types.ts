@@ -1,4 +1,7 @@
-export type AgeCategory = "all" | "age_0_10" | "age_11_20" | "age_21_30" | "age_31_plus";
+export type AgeCategoryKey = "age_0_10" | "age_11_20" | "age_21_30" | "age_31_plus";
+
+// データモデルのキー（"all"を含む）
+export type AgeCategory = "all" | AgeCategoryKey;
 
 export type PriceRange =
   | "under2000"
@@ -33,6 +36,9 @@ export interface StationData {
 
 export interface FilterState {
   year: string;
-  ageCategory: AgeCategory;
+  /** 空Set = すべての築年数を表示 */
+  ageCategories: Set<AgeCategoryKey>;
+  /** 表示基準面積 (㎡)。デフォルト70 */
+  targetArea: number;
   visiblePriceRanges: Set<PriceRange>;
 }

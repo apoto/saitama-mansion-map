@@ -9,9 +9,10 @@ import { SAITAMA_CENTER, DEFAULT_ZOOM } from "@/lib/constants";
 interface Props {
   stations: StationData[];
   filter: FilterState;
+  onStationClick?: (station: StationData) => void;
 }
 
-export default function MapView({ stations, filter }: Props) {
+export default function MapView({ stations, filter, onStationClick }: Props) {
   return (
     <MapContainer
       center={[SAITAMA_CENTER.lat, SAITAMA_CENTER.lng]}
@@ -23,7 +24,7 @@ export default function MapView({ stations, filter }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <StationMarkers stations={stations} filter={filter} />
+      <StationMarkers stations={stations} filter={filter} onStationClick={onStationClick} />
     </MapContainer>
   );
 }

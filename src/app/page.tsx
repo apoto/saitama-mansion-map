@@ -4,8 +4,9 @@ import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import FilterPanel from "@/components/FilterPanel";
 import AreaList from "@/components/AreaList";
+import StationDetail from "@/components/StationDetail";
 import { stationData } from "@/data/stations";
-import type { FilterState, PriceRange } from "@/lib/types";
+import type { FilterState, PriceRange, StationData } from "@/lib/types";
 import { PRICE_RANGES } from "@/lib/constants";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -22,9 +23,12 @@ const ALL_PRICE_RANGES = new Set<PriceRange>(PRICE_RANGES.map((r) => r.key));
 export default function Home() {
   const [filter, setFilter] = useState<FilterState>({
     year: "2025",
-    ageCategory: "all",
+    ageCategories: new Set(),
+    targetArea: 70,
     visiblePriceRanges: ALL_PRICE_RANGES,
   });
+
+  const [selectedStation, setSelectedStation] = useState<StationData | null>(null);
 
   const stations = useMemo(() => stationData, []);
 
@@ -37,11 +41,18 @@ export default function Home() {
             埼玉県 中古マンション相場マップ
           </h1>
           <p className="text-xs text-gray-400">
-            駅別 70㎡換算価格 × 取引件数
+            駅別 {filter.targetArea}㎡換算価格 × 取引件数
           </p>
         </div>
-        <div className="text-xs text-gray-300">
-          データ: 国土交通省 不動産取引価格情報（2024Q4〜2025Q3）
+        <div className="flex flex-col items-end gap-0.5">
+          <div className="text-xs text-gray-400">
+            データ: 国土交通省 不動産取引価格情報
+          </div>
+          {/* データ鮮度バッジ (T-051) */}
+          <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+            <span className="text-xs text-amber-700">2025Q3時点のデータ</span>
+          </div>
         </div>
       </header>
 
@@ -50,13 +61,28 @@ export default function Home() {
 
       {/* Map */}
       <div className="flex-1 min-h-0">
-        <MapView stations={stations} filter={filter} />
+        <MapView
+          stations={stations}
+          filter={filter}
+          onStationClick={setSelectedStation}
+        />
       </div>
 
       {/* Area station list */}
       <div className="max-h-[35vh] overflow-y-auto">
-        <AreaList stations={stations} filter={filter} />
+        <AreaList
+          stations={stations}
+          filter={filter}
+          onStationClick={setSelectedStation}
+        />
       </div>
+
+      {/* Station detail drawer */}
+      <StationDetail
+        station={selectedStation}
+        filter={filter}
+        onClose={() => setSelectedStation(null)}
+      />
     </div>
   );
 }

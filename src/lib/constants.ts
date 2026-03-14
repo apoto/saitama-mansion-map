@@ -1,17 +1,18 @@
-import type { PriceRange } from "./types";
+import type { PriceRange, AgeCategoryKey } from "./types";
 
 export const SAITAMA_CENTER = { lat: 35.87, lng: 139.62 } as const;
 export const DEFAULT_ZOOM = 11;
 
 export const YEARS = ["2025", "2024"] as const;
 
-export const AGE_CATEGORIES = [
-  { value: "all", label: "すべて" },
+export const AGE_CATEGORY_OPTIONS: { value: AgeCategoryKey; label: string }[] = [
   { value: "age_0_10", label: "築10年以内" },
   { value: "age_11_20", label: "築11〜20年" },
   { value: "age_21_30", label: "築21〜30年" },
   { value: "age_31_plus", label: "築31年以上" },
-] as const;
+];
+
+export const TARGET_AREAS = [50, 60, 70, 80, 90] as const;
 
 export const PRICE_RANGES: {
   key: PriceRange;

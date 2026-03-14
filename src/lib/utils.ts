@@ -1,23 +1,49 @@
-import type { StationData, FilterState, PriceRange } from "./types";
+import type { StationData, FilterState, PriceRange, AgeCategoryKey, PriceStats } from "./types";
 import { PRICE_RANGES } from "./constants";
 
-export function getFilteredStats(station: StationData, filter: FilterState) {
-  const yearData = station.years[filter.year];
-  if (!yearData) return null;
-  const stats = yearData[filter.ageCategory];
-  if (!stats || stats.count === 0) return null;
-  return stats;
+function mergeStats(
+  keys: AgeCategoryKey[],
+  yearData: import("./types").StationYearData
+): PriceStats | null {
+  const selected = keys.map((k) => yearData[k]).filter((s) => s && s.count > 0);
+  if (selected.length === 0) return null;
+  const totalCount = selected.reduce((sum, s) => sum + s!.count, 0);
+  if (totalCount === 0) return null;
+  const weightedAvg = selected.reduce((sum, s) => sum + s!.avgPrice70 * s!.count, 0) / totalCount;
+  const weightedMedian = selected.reduce((sum, s) => sum + s!.medianPrice70 * s!.count, 0) / totalCount;
+  return {
+    count: totalCount,
+    avgPrice70: Math.round(weightedAvg),
+    medianPrice70: Math.round(weightedMedian),
+  };
 }
 
-export function getPriceRange(price70InManyen: number): PriceRange {
+export function getFilteredStats(station: StationData, filter: FilterState): PriceStats | null {
+  const yearData = station.years[filter.year];
+  if (!yearData) return null;
+
+  if (filter.ageCategories.size === 0) {
+    const s = yearData.all;
+    return s && s.count > 0 ? s : null;
+  }
+
+  return mergeStats([...filter.ageCategories], yearData);
+}
+
+/** 70㎡ベースの価格を targetArea 換算に変換 */
+export function getDisplayPrice(price70: number, targetArea: number): number {
+  return Math.round((price70 / 70) * targetArea);
+}
+
+export function getPriceRange(displayPrice: number): PriceRange {
   for (const range of PRICE_RANGES) {
-    if (price70InManyen < range.max) return range.key;
+    if (displayPrice < range.max) return range.key;
   }
   return "over5000";
 }
 
-export function getPriceColor(price70InManyen: number): string {
-  const range = PRICE_RANGES.find((r) => r.key === getPriceRange(price70InManyen));
+export function getPriceColor(displayPrice: number): string {
+  const range = PRICE_RANGES.find((r) => r.key === getPriceRange(displayPrice));
   return range?.color ?? "#6B7280";
 }
 
