@@ -3,14 +3,29 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import type { StationData, FilterState, Transaction } from "@/lib/types";
 import { getDisplayPrice, formatPrice, getRangeAgeStat } from "@/lib/utils";
+import type { SimilarResponse } from "@/app/api/similar/route";
 
 const PriceTrendChart = lazy(() => import("./PriceTrendChart"));
+
+const SIMILAR_CACHE_TTL = 24 * 60 * 60 * 1000;
+function getSimilarCached(key: string): SimilarResponse | null {
+  try {
+    const raw = localStorage.getItem(`similar_${key}`);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    return Date.now() - ts < SIMILAR_CACHE_TTL ? data : null;
+  } catch { return null; }
+}
+function setSimilarCached(key: string, data: SimilarResponse) {
+  try { localStorage.setItem(`similar_${key}`, JSON.stringify({ data, ts: Date.now() })); } catch {}
+}
 
 interface Props {
   station: StationData | null;
   filter: FilterState;
   onClose: () => void;
   allStations: StationData[];
+  onSelectStation: (station: StationData) => void;
 }
 
 const AGE_LABELS: Record<string, string> = {
@@ -81,12 +96,16 @@ function checkRateLimit(): { allowed: boolean; remaining: number } {
 
 // ────────────────────────────────────────────────────────────
 
-export default function StationDetail({ station, filter, onClose, allStations }: Props) {
+export default function StationDetail({ station, filter, onClose, allStations, onSelectStation }: Props) {
   const [visible, setVisible] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("period");
   const [sortAsc, setSortAsc] = useState(false);
+
+  // 憧れエリア類似提案
+  const [similarResult, setSimilarResult] = useState<SimilarResponse | null>(null);
+  const [similarLoading, setSimilarLoading] = useState(false);
 
   // AI状態
   const [aiText, setAiText] = useState<string>("");
@@ -104,6 +123,7 @@ export default function StationDetail({ station, filter, onClose, allStations }:
       setAiText("");
       setAiError(null);
       setRateLimitMsg(null);
+      setSimilarResult(null);
       // キャッシュがあれば即表示
       const cached = getCachedSummary(station.stationCode);
       if (cached) setAiText(cached);
@@ -189,6 +209,26 @@ export default function StationDetail({ station, filter, onClose, allStations }:
     }
   }, [station]);
 
+  const handleSimilar = useCallback(async () => {
+    if (!station || !filter.budgetMax) return;
+    const cacheKey = `${station.stationCode}_${filter.budgetMax}_${filter.targetArea}`;
+    const cached = getSimilarCached(cacheKey);
+    if (cached) { setSimilarResult(cached); return; }
+
+    setSimilarLoading(true);
+    try {
+      const res = await fetch("/api/similar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stationCode: station.stationCode, budgetMax: filter.budgetMax, targetArea: filter.targetArea }),
+      });
+      const data: SimilarResponse = await res.json();
+      setSimilarResult(data);
+      setSimilarCached(cacheKey, data);
+    } catch { /* ignore */ }
+    finally { setSimilarLoading(false); }
+  }, [station, filter.budgetMax, filter.targetArea]);
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc((v) => !v);
     else { setSortKey(key); setSortAsc(key === "period" ? false : true); }
@@ -196,9 +236,11 @@ export default function StationDetail({ station, filter, onClose, allStations }:
 
   if (!station) return null;
 
-  const { targetArea, ageCategories, yearFrom, yearTo } = filter;
+  const { targetArea, ageCategories, yearFrom, yearTo, budgetMax } = filter;
   const yearLabel = yearFrom === yearTo ? `${yearTo}年` : `${yearFrom}〜${yearTo}年`;
   const allStats = getRangeAgeStat(station, "all", filter);
+  const displayPriceNow = allStats ? getDisplayPrice(allStats.medianPrice70, targetArea) : null;
+  const isOverBudget = budgetMax !== null && displayPriceNow !== null && displayPriceNow > budgetMax;
 
   const sorted = [...transactions].sort((a, b) => {
     let diff = 0;
@@ -237,14 +279,21 @@ export default function StationDetail({ station, filter, onClose, allStations }:
 
       {/* ドロワー */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 bg-white shadow-xl z-[1001] flex flex-col transition-transform duration-200 ${
+        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-white shadow-xl z-[1001] flex flex-col transition-transform duration-200 ${
           visible ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* ヘッダー */}
         <div className="flex items-start justify-between px-4 pt-4 pb-3 border-b border-gray-100 flex-shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-gray-800">{station.stationName}駅</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-gray-800">{station.stationName}駅</h2>
+              {isOverBudget && (
+                <span className="text-xs bg-red-50 text-red-500 border border-red-200 rounded-full px-2 py-0.5">
+                  予算超過
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-400 mt-0.5">
               {station.lines.length > 0 ? station.lines.join(" / ") : station.area}
             </p>
@@ -344,7 +393,70 @@ export default function StationDetail({ station, filter, onClose, allStations }:
             </div>
           )}
 
-          {/* ③ 価格推移グラフ */}
+          {/* ③ 憧れエリア類似提案（予算超過時のみ） */}
+          {isOverBudget && (
+            <div className="px-4 py-3 border-b border-red-50 bg-red-50/40">
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="text-base">💡</span>
+                <h3 className="text-sm font-semibold text-gray-700">
+                  {station.stationName}が気になるあなたへ
+                </h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-2.5">
+                予算{budgetMax!.toLocaleString()}万円内で、似た特徴のエリアを探します。
+              </p>
+              {!similarResult && (
+                <button
+                  onClick={handleSimilar}
+                  disabled={similarLoading}
+                  className="w-full py-2 text-xs bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {similarLoading ? "検索中..." : "予算内の類似エリアを探す →"}
+                </button>
+              )}
+              {similarResult && (
+                <div className="space-y-2">
+                  {similarResult.summary && (
+                    <p className="text-xs text-gray-600 bg-white rounded-lg px-3 py-2">
+                      {similarResult.summary}
+                    </p>
+                  )}
+                  {similarResult.stations.map((s, i) => {
+                    const st = allStations.find((x) => x.stationCode === s.stationCode);
+                    return (
+                      <div key={s.stationCode} className="bg-white rounded-lg p-2.5 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-red-400">{i + 1}</span>
+                            <span className="text-sm font-bold text-gray-800">{s.stationName}駅</span>
+                            <span className="text-xs text-gray-400">{s.area}</span>
+                          </div>
+                          <span className="text-sm font-bold text-gray-800">{s.medianPrice.toLocaleString()}万円</span>
+                        </div>
+                        {s.reason && <p className="text-xs text-gray-500">{s.reason}</p>}
+                        {st && (
+                          <button
+                            onClick={() => { onSelectStation(st); }}
+                            className="text-xs text-blue-500 hover:underline"
+                          >
+                            詳細を見る →
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={() => setSimilarResult(null)}
+                    className="text-xs text-gray-400 hover:text-gray-600"
+                  >
+                    再検索
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ④ 価格推移グラフ */}
           <div className="px-4 py-3 border-b border-gray-100">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">価格推移グラフ</h3>
             <Suspense fallback={<div className="text-xs text-gray-400 py-4 text-center">グラフを読み込み中...</div>}>

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import FilterPanel from "@/components/FilterPanel";
 import AreaList from "@/components/AreaList";
 import StationDetail from "@/components/StationDetail";
 import SuggestPanel from "@/components/SuggestPanel";
+import BudgetPanel from "@/components/BudgetPanel";
 import { stationData } from "@/data/stations";
 import type { FilterState, PriceRange, StationData } from "@/lib/types";
 import { PRICE_RANGES } from "@/lib/constants";
@@ -21,6 +22,13 @@ const MapView = dynamic(() => import("@/components/MapView"), {
 
 const ALL_PRICE_RANGES = new Set<PriceRange>(PRICE_RANGES.map((r) => r.key));
 
+function getInitialBudget(): number | null {
+  if (typeof window === "undefined") return null;
+  const v = new URLSearchParams(window.location.search).get("budget");
+  const n = v ? parseInt(v, 10) : NaN;
+  return isNaN(n) || n <= 0 ? null : n;
+}
+
 export default function Home() {
   const [filter, setFilter] = useState<FilterState>({
     yearFrom: "2025",
@@ -29,23 +37,36 @@ export default function Home() {
     targetArea: 70,
     visiblePriceRanges: ALL_PRICE_RANGES,
     showHazard: false,
+    budgetMax: getInitialBudget(),
   });
 
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null);
   const [suggestOpen, setSuggestOpen] = useState(false);
+  const [budgetOpen, setBudgetOpen] = useState(false);
   const [highlightedStations, setHighlightedStations] = useState<Set<string>>(new Set());
+
+  // budgetMax が変わったら URL に反映
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (filter.budgetMax !== null) {
+      url.searchParams.set("budget", String(filter.budgetMax));
+    } else {
+      url.searchParams.delete("budget");
+    }
+    history.replaceState(null, "", url.toString());
+  }, [filter.budgetMax]);
 
   const stations = useMemo(() => stationData, []);
 
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 bg-white border-b border-gray-200 shadow-sm">
-        <div>
-          <h1 className="text-lg font-bold text-gray-800 tracking-tight">
+      <header className="flex items-center justify-between px-4 sm:px-5 py-2.5 sm:py-3 bg-white border-b border-gray-200 shadow-sm gap-2">
+        <div className="min-w-0">
+          <h1 className="text-sm sm:text-lg font-bold text-gray-800 tracking-tight leading-tight">
             埼玉県 中古マンション相場マップ
           </h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 hidden sm:block">
             駅別 {filter.targetArea}㎡換算価格 ×{" "}
             {filter.yearFrom === filter.yearTo
               ? `${filter.yearTo}年`
@@ -53,20 +74,25 @@ export default function Home() {
             取引
           </p>
         </div>
-        <div className="flex flex-col items-end gap-1.5">
-          <div className="text-xs text-gray-400">
-            データ: 国土交通省 不動産取引価格情報
-          </div>
-          {/* AIコンシェルジュボタン */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={() => setBudgetOpen(true)}
+            className="inline-flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white rounded-full px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
+          >
+            <span>💰</span>
+            <span className="hidden sm:inline">予算シミュレーター</span>
+            <span className="sm:hidden">予算</span>
+          </button>
           <button
             onClick={() => setSuggestOpen(true)}
-            className="inline-flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-full px-3 py-1 text-xs font-medium transition-colors shadow-sm"
+            className="inline-flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white rounded-full px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
           >
             <span>✨</span>
-            <span>AIエリア提案</span>
+            <span className="hidden sm:inline">AIエリア提案</span>
+            <span className="sm:hidden">AI提案</span>
           </button>
-          {/* データ鮮度バッジ (T-051) */}
-          <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+          {/* データ鮮度バッジ */}
+          <div className="hidden sm:inline-flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
             <span className="text-xs text-amber-700">2025Q3時点のデータ</span>
           </div>
@@ -87,7 +113,7 @@ export default function Home() {
       </div>
 
       {/* Area station list */}
-      <div className="max-h-[35vh] overflow-y-auto">
+      <div className="max-h-[25vh] sm:max-h-[35vh] overflow-y-auto">
         <AreaList
           stations={stations}
           filter={filter}
@@ -101,6 +127,14 @@ export default function Home() {
         filter={filter}
         onClose={() => setSelectedStation(null)}
         allStations={stations}
+        onSelectStation={setSelectedStation}
+      />
+
+      {/* Budget simulator panel */}
+      <BudgetPanel
+        open={budgetOpen}
+        onClose={() => setBudgetOpen(false)}
+        onApply={(budget) => setFilter((f) => ({ ...f, budgetMax: budget }))}
       />
 
       {/* AI Concierge panel */}

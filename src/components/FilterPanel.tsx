@@ -30,7 +30,7 @@ export default function FilterPanel({ filter, onChange }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 bg-white border-b border-gray-200">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white border-b border-gray-200 overflow-x-auto">
       {/* 年度範囲 */}
       <div className="flex items-center gap-1.5">
         <span className="text-xs font-medium text-gray-500 whitespace-nowrap">年度</span>
@@ -130,6 +130,23 @@ export default function FilterPanel({ filter, onChange }: Props) {
         </div>
       </div>
 
+      {/* 予算バッジ */}
+      {filter.budgetMax !== null && (
+        <div className="flex items-center gap-1 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
+          <span className="text-xs text-green-700 font-medium">
+            予算 {filter.budgetMax.toLocaleString()}万円以下
+          </span>
+          <button
+            onClick={() => onChange({ ...filter, budgetMax: null })}
+            className="text-green-500 hover:text-green-700 transition-colors ml-0.5"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* ハザードマップ */}
       <div className="flex items-center gap-1.5">
         <button
@@ -147,7 +164,7 @@ export default function FilterPanel({ filter, onChange }: Props) {
       </div>
 
       {/* 価格帯 */}
-      <div className="flex items-center gap-1.5 ml-auto">
+      <div className="flex items-center gap-1.5 sm:ml-auto">
         <span className="text-xs font-medium text-gray-500 whitespace-nowrap">価格帯</span>
         <div className="flex gap-1">
           {PRICE_RANGES.map((range) => {
