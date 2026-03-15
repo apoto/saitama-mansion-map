@@ -3,6 +3,23 @@ import type { PriceRange, AgeCategoryKey } from "./types";
 export const SAITAMA_CENTER = { lat: 35.87, lng: 139.62 } as const;
 export const DEFAULT_ZOOM = 11;
 
+export const KANTO_CENTER = { lat: 35.75, lng: 139.65 } as const;
+export const KANTO_ZOOM = 9;
+
+export const PREFECTURE_VIEWS: Record<string, { lat: number; lng: number; zoom: number; label: string }> = {
+  "埼玉県": { lat: 35.87, lng: 139.62, zoom: 11, label: "埼玉" },
+  "東京都": { lat: 35.69, lng: 139.69, zoom: 11, label: "東京" },
+  "神奈川県": { lat: 35.44, lng: 139.47, zoom: 10, label: "神奈川" },
+  "千葉県": { lat: 35.65, lng: 140.12, zoom: 10, label: "千葉" },
+  "茨城県": { lat: 36.20, lng: 140.10, zoom: 10, label: "茨城" },
+  "栃木県": { lat: 36.57, lng: 139.88, zoom: 10, label: "栃木" },
+  "群馬県": { lat: 36.39, lng: 139.06, zoom: 10, label: "群馬" },
+};
+
+export const PREFECTURE_ORDER = [
+  "埼玉県", "東京都", "神奈川県", "千葉県", "茨城県", "栃木県", "群馬県",
+] as const;
+
 export const YEARS = [
   "2025", "2024", "2023", "2022", "2021", "2020",
   "2019", "2018", "2017", "2016", "2015", "2014",

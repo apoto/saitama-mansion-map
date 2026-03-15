@@ -7,6 +7,8 @@ import AreaList from "@/components/AreaList";
 import StationDetail from "@/components/StationDetail";
 import SuggestPanel from "@/components/SuggestPanel";
 import BudgetPanel from "@/components/BudgetPanel";
+import PrefectureBar from "@/components/PrefectureBar";
+import CrossPrefPanel from "@/components/CrossPrefPanel";
 import { stationData } from "@/data/stations";
 import type { FilterState, PriceRange, StationData } from "@/lib/types";
 import { PRICE_RANGES } from "@/lib/constants";
@@ -41,8 +43,10 @@ export default function Home() {
   });
 
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null);
+  const [selectedPrefecture, setSelectedPrefecture] = useState<string | null>("埼玉県");
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
+  const [crossPrefOpen, setCrossPrefOpen] = useState(false);
   const [highlightedStations, setHighlightedStations] = useState<Set<string>>(new Set());
 
   // budgetMax が変わったら URL に反映
@@ -64,7 +68,9 @@ export default function Home() {
       <header className="flex items-center justify-between px-4 sm:px-5 py-2.5 sm:py-3 bg-white border-b border-gray-200 shadow-sm gap-2">
         <div className="min-w-0">
           <h1 className="text-sm sm:text-lg font-bold text-gray-800 tracking-tight leading-tight">
-            埼玉県 中古マンション相場マップ
+            {selectedPrefecture
+              ? `${selectedPrefecture.replace("都", "").replace("県", "")} 中古マンション相場`
+              : "関東 中古マンション相場マップ"}
           </h1>
           <p className="text-xs text-gray-400 hidden sm:block">
             駅別 {filter.targetArea}㎡換算価格 ×{" "}
@@ -75,6 +81,14 @@ export default function Home() {
           </p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={() => setCrossPrefOpen(true)}
+            className="inline-flex items-center gap-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
+          >
+            <span>🗾</span>
+            <span className="hidden sm:inline">他県比較</span>
+            <span className="sm:hidden">他県</span>
+          </button>
           <button
             onClick={() => setBudgetOpen(true)}
             className="inline-flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white rounded-full px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
@@ -99,6 +113,9 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Prefecture selector */}
+      <PrefectureBar selected={selectedPrefecture} onChange={setSelectedPrefecture} />
+
       {/* Filters */}
       <FilterPanel filter={filter} onChange={setFilter} />
 
@@ -109,6 +126,7 @@ export default function Home() {
           filter={filter}
           onStationClick={setSelectedStation}
           highlightedStations={highlightedStations}
+          selectedPrefecture={selectedPrefecture}
         />
       </div>
 
@@ -117,6 +135,7 @@ export default function Home() {
         <AreaList
           stations={stations}
           filter={filter}
+          selectedPrefecture={selectedPrefecture}
           onStationClick={setSelectedStation}
         />
       </div>
@@ -135,6 +154,19 @@ export default function Home() {
         open={budgetOpen}
         onClose={() => setBudgetOpen(false)}
         onApply={(budget) => setFilter((f) => ({ ...f, budgetMax: budget }))}
+      />
+
+      {/* Cross-prefecture comparison panel */}
+      <CrossPrefPanel
+        open={crossPrefOpen}
+        onClose={() => setCrossPrefOpen(false)}
+        defaultPrefecture={selectedPrefecture}
+        defaultBudget={filter.budgetMax}
+        onSelectStation={(station) => {
+          setSelectedStation(station);
+          setCrossPrefOpen(false);
+        }}
+        stations={stations}
       />
 
       {/* AI Concierge panel */}

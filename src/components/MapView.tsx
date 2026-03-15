@@ -1,19 +1,34 @@
 "use client";
 
-import { MapContainer, TileLayer, LayersControl } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import StationMarkers from "./StationMarkers";
 import type { StationData, FilterState } from "@/lib/types";
-import { SAITAMA_CENTER, DEFAULT_ZOOM } from "@/lib/constants";
+import { SAITAMA_CENTER, DEFAULT_ZOOM, KANTO_CENTER, KANTO_ZOOM, PREFECTURE_VIEWS } from "@/lib/constants";
 
 interface Props {
   stations: StationData[];
   filter: FilterState;
   onStationClick?: (station: StationData) => void;
   highlightedStations?: Set<string>;
+  selectedPrefecture: string | null;
 }
 
-export default function MapView({ stations, filter, onStationClick, highlightedStations }: Props) {
+function MapController({ prefecture }: { prefecture: string | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (prefecture === null) {
+      map.flyTo([KANTO_CENTER.lat, KANTO_CENTER.lng], KANTO_ZOOM, { duration: 0.6 });
+    } else {
+      const v = PREFECTURE_VIEWS[prefecture];
+      if (v) map.flyTo([v.lat, v.lng], v.zoom, { duration: 0.6 });
+    }
+  }, [map, prefecture]);
+  return null;
+}
+
+export default function MapView({ stations, filter, onStationClick, highlightedStations, selectedPrefecture }: Props) {
   return (
     <MapContainer
       center={[SAITAMA_CENTER.lat, SAITAMA_CENTER.lng]}
@@ -33,6 +48,7 @@ export default function MapView({ stations, filter, onStationClick, highlightedS
           zIndex={400}
         />
       )}
+      <MapController prefecture={selectedPrefecture} />
       <StationMarkers
         stations={stations}
         filter={filter}
