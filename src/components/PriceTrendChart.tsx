@@ -21,13 +21,15 @@ interface Props {
   targetArea: number;
 }
 
+type ChartType = "price" | "count";
+
 export default function PriceTrendChart({ station, allStations, targetArea }: Props) {
+  const [chartType, setChartType] = useState<ChartType>("price");
   const [selectedLine, setSelectedLine] = useState<string | null>(
     station.lines.length > 0 ? station.lines[0] : null
   );
   const [showAll, setShowAll] = useState(false);
 
-  // 表示する年度（データが少ない古い年度を省略するオプション）
   const displayYears = (showAll ? [...YEARS] : YEARS.filter((y) => parseInt(y) >= 2015)).reverse();
 
   const trendData = useMemo(
@@ -35,14 +37,22 @@ export default function PriceTrendChart({ station, allStations, targetArea }: Pr
     [station, selectedLine, allStations, displayYears]
   );
 
-  // targetArea換算に変換
   const chartData = trendData.map((pt) => ({
     year: pt.year,
-    station: pt.stationPrice !== null ? Math.round((pt.stationPrice / 70) * targetArea) : null,
-    line: pt.linePrice !== null ? Math.round((pt.linePrice / 70) * targetArea) : null,
+    station:
+      chartType === "price"
+        ? pt.stationPrice !== null
+          ? Math.round((pt.stationPrice / 70) * targetArea)
+          : null
+        : pt.stationCount,
+    line:
+      chartType === "price"
+        ? pt.linePrice !== null
+          ? Math.round((pt.linePrice / 70) * targetArea)
+          : null
+        : pt.lineCountPerStation,
   }));
 
-  // データがほぼない場合の早期リターン
   const hasData = chartData.some((d) => d.station !== null);
   if (!hasData) {
     return (
@@ -52,43 +62,65 @@ export default function PriceTrendChart({ station, allStations, targetArea }: Pr
     );
   }
 
-  const formatYAxis = (v: number) => `${(v / 100).toFixed(0)}百万`;
-  const formatTooltipValue = (v: number) => [`${v.toLocaleString()}万円`, ""];
+  const lineLegendLabel = selectedLine
+    ? chartType === "price"
+      ? `${selectedLine}平均`
+      : `${selectedLine}駅平均`
+    : "";
 
   return (
     <div className="space-y-3">
-      {/* 路線選択 */}
-      {station.lines.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-gray-400">比較路線:</span>
-          <button
-            onClick={() => setSelectedLine(null)}
-            className={`text-xs px-2 py-0.5 rounded-full transition-colors ${
-              selectedLine === null
-                ? "bg-gray-700 text-white"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            }`}
-          >
-            なし
-          </button>
-          {station.lines.map((line) => (
+      {/* グラフ種別タブ */}
+      <div className="flex items-center justify-between">
+        <div className="flex rounded-md overflow-hidden border border-gray-200 text-xs">
+          {(["price", "count"] as ChartType[]).map((type) => (
             <button
-              key={line}
-              onClick={() => setSelectedLine(line)}
-              className={`text-xs px-2 py-0.5 rounded-full transition-colors ${
-                selectedLine === line
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              key={type}
+              onClick={() => setChartType(type)}
+              className={`px-3 py-1 transition-colors ${
+                chartType === type
+                  ? "bg-gray-800 text-white"
+                  : "bg-white text-gray-500 hover:bg-gray-50"
               }`}
             >
-              {line}
+              {type === "price" ? "価格推移" : "取引件数"}
             </button>
           ))}
         </div>
-      )}
 
-      {/* グラフ */}
-      <ResponsiveContainer width="100%" height={200}>
+        {/* 路線選択 */}
+        {station.lines.length > 0 && (
+          <div className="flex gap-1 items-center">
+            <span className="text-xs text-gray-400">比較:</span>
+            <button
+              onClick={() => setSelectedLine(null)}
+              className={`text-xs px-2 py-0.5 rounded-full transition-colors ${
+                selectedLine === null
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              なし
+            </button>
+            {station.lines.map((line) => (
+              <button
+                key={line}
+                onClick={() => setSelectedLine(line)}
+                className={`text-xs px-2 py-0.5 rounded-full transition-colors ${
+                  selectedLine === line
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                {line}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* グラフ本体 */}
+      <ResponsiveContainer width="100%" height={190}>
         <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis
@@ -99,17 +131,29 @@ export default function PriceTrendChart({ station, allStations, targetArea }: Pr
             interval={showAll ? 3 : 1}
           />
           <YAxis
-            tickFormatter={(v) => `${Math.round(v / 100)}百`}
+            tickFormatter={(v) =>
+              chartType === "price"
+                ? `${Math.round(v / 100)}百`
+                : `${v}件`
+            }
             tick={{ fontSize: 10, fill: "#9ca3af" }}
             tickLine={false}
             axisLine={false}
-            width={36}
+            width={chartType === "price" ? 36 : 40}
           />
           <Tooltip
-            formatter={(value, name) => [
-              typeof value === "number" ? `${value.toLocaleString()}万円` : "-",
-              name === "station" ? `${station.stationName}駅` : `${selectedLine ?? ""}平均`,
-            ]}
+            formatter={(value, name) => {
+              if (typeof value !== "number") return ["-", ""];
+              const label =
+                name === "station"
+                  ? `${station.stationName}駅`
+                  : lineLegendLabel;
+              const formatted =
+                chartType === "price"
+                  ? `${value.toLocaleString()}万円`
+                  : `${value.toLocaleString()}件`;
+              return [formatted, label];
+            }}
             labelFormatter={(label) => `${label}年`}
             contentStyle={{
               fontSize: 11,
@@ -121,7 +165,7 @@ export default function PriceTrendChart({ station, allStations, targetArea }: Pr
           {selectedLine && (
             <Legend
               formatter={(value) =>
-                value === "station" ? `${station.stationName}駅` : `${selectedLine}平均`
+                value === "station" ? `${station.stationName}駅` : lineLegendLabel
               }
               wrapperStyle={{ fontSize: 10, paddingTop: 4 }}
             />
@@ -152,7 +196,12 @@ export default function PriceTrendChart({ station, allStations, targetArea }: Pr
       </ResponsiveContainer>
 
       {/* 期間切替 */}
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-gray-400">
+          {chartType === "count" && selectedLine
+            ? `路線比較: ${selectedLine}の駅あたり平均件数`
+            : ""}
+        </p>
         <button
           onClick={() => setShowAll((v) => !v)}
           className="text-xs text-gray-400 hover:text-gray-600 transition-colors"

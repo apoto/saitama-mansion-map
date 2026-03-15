@@ -115,10 +115,14 @@ export function groupStationsByArea(stations: StationData[]): Record<string, Sta
 
 export interface TrendPoint {
   year: string;
-  /** この駅の70㎡換算中央値（万円）。データなしは null */
+  /** この駅の70㎡換算中央値（万円） */
   stationPrice: number | null;
-  /** 路線平均の70㎡換算中央値（万円）。データなしは null */
+  /** 路線平均の70㎡換算中央値（万円） */
   linePrice: number | null;
+  /** この駅の取引件数 */
+  stationCount: number | null;
+  /** 路線内の駅あたり平均取引件数 */
+  lineCountPerStation: number | null;
 }
 
 /**
@@ -140,24 +144,25 @@ export function buildTrendData(
     : [];
 
   return years.map((year) => {
-    // この駅の価格
     const yd = station.years[year];
-    const stationPrice =
-      yd && yd.all.count > 0 ? yd.all.medianPrice70 : null;
+    const stationPrice = yd && yd.all.count > 0 ? yd.all.medianPrice70 : null;
+    const stationCount = yd && yd.all.count > 0 ? yd.all.count : null;
 
-    // 路線平均: その年にデータがある駅の加重平均
     let linePrice: number | null = null;
+    let lineCountPerStation: number | null = null;
     if (lineStations.length > 0) {
       const valid = lineStations
         .map((s) => s.years[year]?.all)
         .filter((s): s is NonNullable<typeof s> => !!s && s.count > 0);
       if (valid.length > 0) {
         const totalCount = valid.reduce((sum, s) => sum + s.count, 0);
-        const weightedSum = valid.reduce((sum, s) => sum + s.medianPrice70 * s.count, 0);
-        linePrice = Math.round(weightedSum / totalCount);
+        linePrice = Math.round(
+          valid.reduce((sum, s) => sum + s.medianPrice70 * s.count, 0) / totalCount
+        );
+        lineCountPerStation = Math.round(totalCount / valid.length);
       }
     }
 
-    return { year, stationPrice, linePrice };
+    return { year, stationPrice, linePrice, stationCount, lineCountPerStation };
   });
 }
