@@ -40,6 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# raw data (large CSVs - keep locally, don't push)
-# data/raw/*.csv
+# raw data CSVs are tracked in git (see data/raw/)
 .env.local

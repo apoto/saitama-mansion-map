@@ -31,6 +31,8 @@ export interface StationData {
   lng: number;
   lines: string[];
   area: string;
+  /** 都道府県名（例: "埼玉県", "千葉県"）*/
+  prefecture?: string;
   years: Record<string, StationYearData>;
   /** 駅徒歩分数の中央値（万円）。stations.ts 再生成後に有効 */
   medianWalkMinutes?: number;
@@ -50,15 +52,12 @@ export interface Transaction {
 }
 
 export interface FilterState {
-  /** 表示年度の範囲（開始）。デフォルト "2025" */
   yearFrom: string;
-  /** 表示年度の範囲（終了）。デフォルト "2025" */
   yearTo: string;
-  /** 空Set = すべての築年数を表示 */
   ageCategories: Set<AgeCategoryKey>;
-  /** 表示基準面積 (㎡)。デフォルト70 */
   targetArea: number;
   visiblePriceRanges: Set<PriceRange>;
-  /** ハザードマップ（洪水浸水想定区域）を重畳表示するか */
   showHazard: boolean;
+  /** 予算上限（万円）。null = フィルタなし */
+  budgetMax: number | null;
 }
