@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { stationData } from "@/data/stations";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // Node.js runtime（stationDataのインポートのため）
 export const runtime = "nodejs";
@@ -210,6 +211,15 @@ ${candidateText}
 
 // ── Main ────────────────────────────────────────────────────
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`suggest:${ip}`, 5, 60 * 60 * 1000);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: `レートリミット超過。${rl.retryAfterSec}秒後に再試行してください。` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
+    );
+  }
+
   const { query } = await req.json();
   if (!query?.trim()) {
     return Response.json({ error: "query is required" }, { status: 400 });

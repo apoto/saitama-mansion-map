@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const runtime = "edge";
 
@@ -66,6 +67,15 @@ ${ageLines || "  データなし"}
 }
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`summary:${ip}`, 10, 60 * 60 * 1000);
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({ error: `レートリミット超過。${rl.retryAfterSec}秒後に再試行してください。` }),
+      { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(rl.retryAfterSec) } }
+    );
+  }
+
   const body: RequestBody = await req.json();
 
   const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY ?? "" });

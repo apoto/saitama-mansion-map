@@ -186,6 +186,10 @@ export default function StationDetail({ station, filter, onClose, allStations, o
         }),
       });
 
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "リクエストが多すぎます。しばらくお待ちください。");
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (!res.body) throw new Error("No response body");
 
@@ -222,10 +226,22 @@ export default function StationDetail({ station, filter, onClose, allStations, o
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stationCode: station.stationCode, budgetMax: filter.budgetMax, targetArea: filter.targetArea }),
       });
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "リクエストが多すぎます。しばらくお待ちください。");
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: SimilarResponse = await res.json();
       setSimilarResult(data);
       setSimilarCached(cacheKey, data);
-    } catch { /* ignore */ }
+    } catch (err) {
+      // エラーを簡易表示するため空のresultにメッセージを入れる
+      setSimilarResult({
+        aspirational: { stationName: station.stationName, medianPrice: 0 },
+        stations: [],
+        summary: err instanceof Error ? err.message : "エラーが発生しました。",
+      });
+    }
     finally { setSimilarLoading(false); }
   }, [station, filter.budgetMax, filter.targetArea]);
 

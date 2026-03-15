@@ -79,13 +79,17 @@ export default function SuggestPanel({ open, onClose, onSelectStation, onHighlig
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q }),
       });
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "リクエストが多すぎます。しばらくお待ちください。");
+      }
       if (!res.ok) throw new Error("APIエラーが発生しました");
       const data: SuggestResponse = await res.json();
       setResult(data);
       setCache(q, data);
       onHighlight(new Set(data.stations.map((s) => s.stationCode)));
-    } catch {
-      setError("検索中にエラーが発生しました。しばらく待ってから再試行してください。");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "検索中にエラーが発生しました。");
     } finally {
       setLoading(false);
     }
