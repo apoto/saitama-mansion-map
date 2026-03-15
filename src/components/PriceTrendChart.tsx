@@ -28,7 +28,7 @@ export default function PriceTrendChart({ station, allStations, targetArea }: Pr
   const [showAll, setShowAll] = useState(false);
 
   // 表示する年度（データが少ない古い年度を省略するオプション）
-  const displayYears = showAll ? [...YEARS] : YEARS.filter((y) => parseInt(y) >= 2015);
+  const displayYears = (showAll ? [...YEARS] : YEARS.filter((y) => parseInt(y) >= 2015)).reverse();
 
   const trendData = useMemo(
     () => buildTrendData(station, selectedLine, allStations, displayYears),
