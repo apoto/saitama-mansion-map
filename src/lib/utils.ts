@@ -1,5 +1,5 @@
-import type { StationData, FilterState, PriceRange, AgeCategoryKey, PriceStats } from "./types";
-import { PRICE_RANGES } from "./constants";
+import type { StationData, FilterState, PriceRange, AgeCategoryKey, AgeCategory, PriceStats } from "./types";
+import { PRICE_RANGES, YEARS } from "./constants";
 
 function mergeStats(
   keys: AgeCategoryKey[],
@@ -18,16 +18,59 @@ function mergeStats(
   };
 }
 
+/** filter の yearFrom〜yearTo に含まれる年度を返す */
+export function getYearsInRange(filter: FilterState): string[] {
+  const from = parseInt(filter.yearFrom);
+  const to = parseInt(filter.yearTo);
+  return YEARS.filter((y) => {
+    const yi = parseInt(y);
+    return yi >= from && yi <= to;
+  });
+}
+
+/** 複数の PriceStats を件数加重平均でマージ */
+function mergeStatsList(statsList: PriceStats[]): PriceStats | null {
+  const valid = statsList.filter((s) => s.count > 0);
+  if (valid.length === 0) return null;
+  const totalCount = valid.reduce((sum, s) => sum + s.count, 0);
+  return {
+    count: totalCount,
+    avgPrice70: Math.round(valid.reduce((sum, s) => sum + s.avgPrice70 * s.count, 0) / totalCount),
+    medianPrice70: Math.round(valid.reduce((sum, s) => sum + s.medianPrice70 * s.count, 0) / totalCount),
+  };
+}
+
 export function getFilteredStats(station: StationData, filter: FilterState): PriceStats | null {
-  const yearData = station.years[filter.year];
-  if (!yearData) return null;
+  const years = getYearsInRange(filter);
 
-  if (filter.ageCategories.size === 0) {
-    const s = yearData.all;
-    return s && s.count > 0 ? s : null;
-  }
+  const perYear: PriceStats[] = years.flatMap((year) => {
+    const yearData = station.years[year];
+    if (!yearData) return [];
+    if (filter.ageCategories.size === 0) {
+      return yearData.all.count > 0 ? [yearData.all] : [];
+    }
+    const merged = mergeStats([...filter.ageCategories], yearData);
+    return merged ? [merged] : [];
+  });
 
-  return mergeStats([...filter.ageCategories], yearData);
+  return mergeStatsList(perYear);
+}
+
+/**
+ * 特定の築年数カテゴリ（または"all"）の範囲集計を返す。
+ * StationDetail の年度サマリ・築年数別内訳に使用。
+ */
+export function getRangeAgeStat(
+  station: StationData,
+  ageCat: AgeCategory,
+  filter: FilterState
+): PriceStats | null {
+  const years = getYearsInRange(filter);
+  const statsList: PriceStats[] = years.flatMap((year) => {
+    const s = station.years[year]?.[ageCat];
+    return s && s.count > 0 ? [s] : [];
+  });
+  return mergeStatsList(statsList);
 }
 
 /** 70㎡ベースの価格を targetArea 換算に変換 */

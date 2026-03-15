@@ -23,7 +23,8 @@ const ALL_PRICE_RANGES = new Set<PriceRange>(PRICE_RANGES.map((r) => r.key));
 
 export default function Home() {
   const [filter, setFilter] = useState<FilterState>({
-    year: "2025",
+    yearFrom: "2025",
+    yearTo: "2025",
     ageCategories: new Set(),
     targetArea: 70,
     visiblePriceRanges: ALL_PRICE_RANGES,
@@ -45,7 +46,11 @@ export default function Home() {
             埼玉県 中古マンション相場マップ
           </h1>
           <p className="text-xs text-gray-400">
-            駅別 {filter.targetArea}㎡換算価格 × 取引件数
+            駅別 {filter.targetArea}㎡換算価格 ×{" "}
+            {filter.yearFrom === filter.yearTo
+              ? `${filter.yearTo}年`
+              : `${filter.yearFrom}〜${filter.yearTo}年`}
+            取引
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">

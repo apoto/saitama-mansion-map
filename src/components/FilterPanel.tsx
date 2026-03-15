@@ -31,20 +31,47 @@ export default function FilterPanel({ filter, onChange }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 bg-white border-b border-gray-200">
-      {/* 年度 */}
-      <div className="flex items-center gap-2">
+      {/* 年度範囲 */}
+      <div className="flex items-center gap-1.5">
         <span className="text-xs font-medium text-gray-500 whitespace-nowrap">年度</span>
         <select
-          value={filter.year}
-          onChange={(e) => onChange({ ...filter, year: e.target.value })}
-          className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          value={filter.yearFrom}
+          onChange={(e) => {
+            const from = e.target.value;
+            // yearFrom > yearTo なら yearTo を from に合わせる
+            const to = parseInt(from) > parseInt(filter.yearTo) ? from : filter.yearTo;
+            onChange({ ...filter, yearFrom: from, yearTo: to });
+          }}
+          className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         >
           {YEARS.map((y) => (
-            <option key={y} value={y}>
-              {y}年
-            </option>
+            <option key={y} value={y}>{y}年</option>
           ))}
         </select>
+        <span className="text-xs text-gray-400">〜</span>
+        <select
+          value={filter.yearTo}
+          onChange={(e) => {
+            const to = e.target.value;
+            // yearTo < yearFrom なら yearFrom を to に合わせる
+            const from = parseInt(to) < parseInt(filter.yearFrom) ? to : filter.yearFrom;
+            onChange({ ...filter, yearFrom: from, yearTo: to });
+          }}
+          className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        >
+          {YEARS.map((y) => (
+            <option key={y} value={y}>{y}年</option>
+          ))}
+        </select>
+        {filter.yearFrom !== filter.yearTo && (
+          <button
+            onClick={() => onChange({ ...filter, yearFrom: filter.yearTo })}
+            className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+            title="最新年度のみに戻す"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* 面積 */}

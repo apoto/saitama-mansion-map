@@ -50,7 +50,10 @@ export interface Transaction {
 }
 
 export interface FilterState {
-  year: string;
+  /** 表示年度の範囲（開始）。デフォルト "2025" */
+  yearFrom: string;
+  /** 表示年度の範囲（終了）。デフォルト "2025" */
+  yearTo: string;
   /** 空Set = すべての築年数を表示 */
   ageCategories: Set<AgeCategoryKey>;
   /** 表示基準面積 (㎡)。デフォルト70 */

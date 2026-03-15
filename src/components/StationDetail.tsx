@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import type { StationData, FilterState, Transaction } from "@/lib/types";
-import { getDisplayPrice, formatPrice } from "@/lib/utils";
+import { getDisplayPrice, formatPrice, getRangeAgeStat } from "@/lib/utils";
 
 const PriceTrendChart = lazy(() => import("./PriceTrendChart"));
 
@@ -196,9 +196,9 @@ export default function StationDetail({ station, filter, onClose, allStations }:
 
   if (!station) return null;
 
-  const yearData = station.years[filter.year];
-  const allStats = yearData?.all;
-  const { targetArea, ageCategories } = filter;
+  const { targetArea, ageCategories, yearFrom, yearTo } = filter;
+  const yearLabel = yearFrom === yearTo ? `${yearTo}年` : `${yearFrom}〜${yearTo}年`;
+  const allStats = getRangeAgeStat(station, "all", filter);
 
   const sorted = [...transactions].sort((a, b) => {
     let diff = 0;
@@ -295,10 +295,10 @@ export default function StationDetail({ station, filter, onClose, allStations }:
           </div>
 
           {/* ② 数値サマリ */}
-          {yearData && allStats && allStats.count > 0 ? (
+          {allStats && allStats.count > 0 ? (
             <div className="px-4 py-3 border-b border-gray-100">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                {filter.year}年 取引サマリ
+                {yearLabel} 取引サマリ
               </h3>
               <div className="space-y-1.5">
                 <div className="flex justify-between text-sm">
@@ -323,7 +323,7 @@ export default function StationDetail({ station, filter, onClose, allStations }:
                 <p className="text-xs font-medium text-gray-500 mb-1.5">築年数別内訳</p>
                 <div className="space-y-1">
                   {(["age_0_10", "age_11_20", "age_21_30", "age_31_plus"] as const).map((key) => {
-                    const s = yearData[key];
+                    const s = getRangeAgeStat(station, key, filter);
                     if (!s || s.count === 0) return null;
                     const isActive = ageCategories.size === 0 || ageCategories.has(key);
                     return (
@@ -340,7 +340,7 @@ export default function StationDetail({ station, filter, onClose, allStations }:
             </div>
           ) : (
             <div className="px-4 py-3 border-b border-gray-100">
-              <p className="text-sm text-gray-400">{filter.year}年のデータがありません。</p>
+              <p className="text-sm text-gray-400">{yearLabel}のデータがありません。</p>
             </div>
           )}
 
