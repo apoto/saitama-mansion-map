@@ -42,8 +42,9 @@ export function checkRateLimit(
 }
 
 export function getClientIp(req: Request): string {
+  // x-forwarded-forの末尾を使う（先頭はクライアントが偽装可能。Vercelは実際のIPを末尾に追記する）
   return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ||
     req.headers.get("x-real-ip") ||
     "unknown"
   );

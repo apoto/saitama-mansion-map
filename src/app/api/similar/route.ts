@@ -77,8 +77,14 @@ export async function POST(req: Request) {
   }
 
   const { stationCode, budgetMax, targetArea = 70 } = await req.json();
-  if (!stationCode || !budgetMax) {
-    return Response.json({ error: "stationCode and budgetMax are required" }, { status: 400 });
+  if (!stationCode || typeof stationCode !== "string") {
+    return Response.json({ error: "stationCode is required" }, { status: 400 });
+  }
+  if (!Number.isFinite(budgetMax) || budgetMax <= 0 || budgetMax > 100000) {
+    return Response.json({ error: "budgetMax must be a positive number (≤100000)" }, { status: 400 });
+  }
+  if (!Number.isFinite(targetArea) || targetArea <= 0 || targetArea > 300) {
+    return Response.json({ error: "targetArea must be a positive number (≤300)" }, { status: 400 });
   }
 
   const target = stationData.find((s) => s.stationCode === stationCode);
