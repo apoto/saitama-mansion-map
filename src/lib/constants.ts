@@ -43,11 +43,10 @@ export const PRICE_RANGES: {
   min: number;
   max: number;
 }[] = [
-  { key: "under2000", label: "〜2,000万", color: "#3B82F6", min: 0, max: 2000 },
-  { key: "2000_3000", label: "2,000〜3,000万", color: "#22C55E", min: 2000, max: 3000 },
-  { key: "3000_4000", label: "3,000〜4,000万", color: "#EAB308", min: 3000, max: 4000 },
-  { key: "4000_5000", label: "4,000〜5,000万", color: "#F97316", min: 4000, max: 5000 },
-  { key: "over5000", label: "5,000万〜", color: "#EF4444", min: 5000, max: Infinity },
+  { key: "under3000",  label: "〜3,000万",       color: "#3B82F6", min: 0,    max: 3000 },
+  { key: "3000_5000",  label: "3,000〜5,000万",  color: "#22C55E", min: 3000, max: 5000 },
+  { key: "5000_7000",  label: "5,000〜7,000万",  color: "#F97316", min: 5000, max: 7000 },
+  { key: "over7000",   label: "7,000万〜",        color: "#EF4444", min: 7000, max: Infinity },
 ];
 
 export const AREA_ORDER = [

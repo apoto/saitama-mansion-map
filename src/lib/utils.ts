@@ -82,7 +82,7 @@ export function getPriceRange(displayPrice: number): PriceRange {
   for (const range of PRICE_RANGES) {
     if (displayPrice < range.max) return range.key;
   }
-  return "over5000";
+  return "over7000";
 }
 
 export function getPriceColor(displayPrice: number): string {

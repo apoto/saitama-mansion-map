@@ -4,11 +4,10 @@ export type AgeCategoryKey = "age_0_10" | "age_11_20" | "age_21_30" | "age_31_pl
 export type AgeCategory = "all" | AgeCategoryKey;
 
 export type PriceRange =
-  | "under2000"
-  | "2000_3000"
-  | "3000_4000"
-  | "4000_5000"
-  | "over5000";
+  | "under3000"
+  | "3000_5000"
+  | "5000_7000"
+  | "over7000";
 
 export interface PriceStats {
   count: number;

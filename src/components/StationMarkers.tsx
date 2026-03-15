@@ -16,13 +16,21 @@ interface Props {
   filter: FilterState;
   onStationClick?: (station: StationData) => void;
   highlightedStations?: Set<string>;
+  selectedPrefecture: string | null;
 }
 
-export default function StationMarkers({ stations, filter, onStationClick, highlightedStations }: Props) {
+export default function StationMarkers({ stations, filter, onStationClick, highlightedStations, selectedPrefecture }: Props) {
   const hasHighlight = highlightedStations && highlightedStations.size > 0;
+
+  // 全関東選択時はマーカーを非表示（CrossPrefPanel で比較する設計）
+  if (selectedPrefecture === null) return null;
+
+  // 選択された都道府県のみ表示
+  const visibleStations = stations.filter((s) => s.prefecture === selectedPrefecture);
+
   return (
     <>
-      {stations.map((station) => {
+      {visibleStations.map((station) => {
         const stats = getFilteredStats(station, filter);
         if (!stats) return null;
 
@@ -33,7 +41,8 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
         const radius = getMarkerRadius(stats.count);
         const displayAvg = getDisplayPrice(stats.avgPrice70, filter.targetArea);
         const isHighlighted = hasHighlight && highlightedStations!.has(station.stationCode);
-        const dimmed = hasHighlight && !isHighlighted;
+        const overBudget = filter.budgetMax !== null && displayPrice > filter.budgetMax;
+        const dimmed = (hasHighlight && !isHighlighted) || overBudget;
 
         return (
           <CircleMarker
@@ -41,11 +50,11 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
             center={[station.lat, station.lng]}
             radius={isHighlighted ? radius + 4 : radius}
             pathOptions={{
-              fillColor: color,
-              color: isHighlighted ? "#1d4ed8" : color,
+              fillColor: overBudget ? "#9ca3af" : color,
+              color: isHighlighted ? "#1d4ed8" : overBudget ? "#9ca3af" : color,
               weight: isHighlighted ? 3 : 2,
-              opacity: dimmed ? 0.2 : 0.9,
-              fillOpacity: dimmed ? 0.1 : isHighlighted ? 0.75 : 0.55,
+              opacity: dimmed ? 0.25 : 0.9,
+              fillOpacity: dimmed ? 0.12 : isHighlighted ? 0.75 : 0.55,
             }}
             eventHandlers={
               onStationClick

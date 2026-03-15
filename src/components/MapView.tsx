@@ -30,6 +30,15 @@ function MapController({ prefecture }: { prefecture: string | null }) {
 
 export default function MapView({ stations, filter, onStationClick, highlightedStations, selectedPrefecture }: Props) {
   return (
+    <div className="relative h-full w-full">
+    {selectedPrefecture === null && (
+      <div className="absolute inset-0 z-[9000] flex items-center justify-center pointer-events-none">
+        <div className="bg-white/90 rounded-xl px-5 py-3 shadow-lg text-center">
+          <p className="text-sm font-medium text-gray-700">都道府県を選択すると駅マーカーが表示されます</p>
+          <p className="text-xs text-gray-400 mt-0.5">「他県比較」ボタンで予算別の横断比較ができます</p>
+        </div>
+      </div>
+    )}
     <MapContainer
       center={[SAITAMA_CENTER.lat, SAITAMA_CENTER.lng]}
       zoom={DEFAULT_ZOOM}
@@ -54,7 +63,9 @@ export default function MapView({ stations, filter, onStationClick, highlightedS
         filter={filter}
         onStationClick={onStationClick}
         highlightedStations={highlightedStations}
+        selectedPrefecture={selectedPrefecture}
       />
     </MapContainer>
+    </div>
   );
 }
