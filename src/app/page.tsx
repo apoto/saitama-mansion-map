@@ -90,9 +90,12 @@ export default function Home() {
       <header className="flex items-center justify-between px-4 sm:px-5 py-2.5 sm:py-3 bg-white border-b border-gray-200 shadow-sm gap-2">
         <div className="min-w-0">
           <h1 className="text-sm sm:text-lg font-bold text-gray-800 tracking-tight leading-tight">
-            {selectedPrefecture
-              ? `${selectedPrefecture.replace("都", "").replace("県", "")} 中古マンション相場`
-              : "関東 中古マンション相場マップ"}
+            埼玉県 中古マンション相場マップ
+            {selectedPrefecture && selectedPrefecture !== "埼玉県" && (
+              <span className="ml-1.5 text-xs font-normal text-gray-400">
+                ({selectedPrefecture.replace("県", "").replace("都", "")}表示中)
+              </span>
+            )}
           </h1>
           <p className="text-xs text-gray-400 hidden sm:block">
             駅別 {filter.targetArea}㎡換算価格 ×{" "}
