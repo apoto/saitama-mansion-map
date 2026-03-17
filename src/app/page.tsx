@@ -63,13 +63,53 @@ export default function Home() {
   const [suggestResult, setSuggestResult] = useState<SuggestResponse | null>(null);
   // G-01: ウィザード表示フラグ（クライアントのみ判定）
   const [showWizard, setShowWizard] = useState(false);
+  // G-23: お気に入り
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (localStorage.getItem("budget_callout_dismissed") === "1") {
       setBudgetCalloutDismissed(true);
     }
     setShowWizard(shouldShowWizard());
+    // お気に入りを localStorage から復元（G-23）
+    try {
+      const saved = localStorage.getItem("favorites");
+      if (saved) setFavorites(new Set(JSON.parse(saved)));
+    } catch {}
   }, []);
+
+  // お気に入りの追加・削除（G-23）
+  function toggleFavorite(stationCode: string) {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(stationCode)) {
+        next.delete(stationCode);
+      } else {
+        next.add(stationCode);
+        // G-25: 追加時に wizard_area_text を使って自動提案
+        triggerFavoriteSuggest(stationCode, next);
+      }
+      try { localStorage.setItem("favorites", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
+
+  // G-25: お気に入り登録時にAI自動提案を実行
+  async function triggerFavoriteSuggest(addedCode: string, currentFavorites: Set<string>) {
+    const wizardText = (() => { try { return localStorage.getItem("wizard_area_text") ?? ""; } catch { return ""; } })();
+    const addedStation = stations.find((s) => s.stationCode === addedCode);
+    if (!addedStation) return;
+    const parts = [`${addedStation.stationName}駅のような雰囲気のエリア`];
+    if (wizardText) parts.push(wizardText);
+    if (filter.budgetMax) parts.push(`予算${filter.budgetMax.toLocaleString()}万円以内`);
+    const query = parts.join("、") + "でおすすめの駅を教えてください";
+    try {
+      const res = await fetch("/api/suggest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query }) });
+      if (!res.ok) return;
+      const data: SuggestResponse = await res.json();
+      try { localStorage.setItem("favorites_suggest_cache", JSON.stringify({ data, query, ts: Date.now() })); } catch {}
+    } catch {}
+  }
 
   // budgetMax が変わったら URL に反映
   useEffect(() => {
@@ -182,6 +222,8 @@ export default function Home() {
           filter={filter}
           selectedPrefecture={selectedPrefecture}
           onStationClick={setSelectedStation}
+          favorites={favorites}
+          onFindSimilar={() => setSuggestOpen(true)}
         />
       </div>
 
@@ -192,6 +234,8 @@ export default function Home() {
         onClose={() => setSelectedStation(null)}
         allStations={stations}
         onSelectStation={setSelectedStation}
+        isFavorite={selectedStation ? favorites.has(selectedStation.stationCode) : false}
+        onFavoriteToggle={toggleFavorite}
       />
 
       {/* Budget simulator panel */}

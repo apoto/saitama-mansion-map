@@ -15,6 +15,8 @@ interface Props {
   filter: FilterState;
   selectedPrefecture: string | null;
   onStationClick?: (station: StationData) => void;
+  favorites?: Set<string>;
+  onFindSimilar?: () => void;
 }
 
 interface StationRow {
@@ -179,13 +181,42 @@ function AllKantoList({
   );
 }
 
-export default function AreaList({ stations, filter, selectedPrefecture, onStationClick }: Props) {
+export default function AreaList({ stations, filter, selectedPrefecture, onStationClick, favorites, onFindSimilar }: Props) {
   const [budgetOnly, setBudgetOnly] = useState(false);
 
   const prefLabel = selectedPrefecture ?? "全関東";
 
+  // お気に入り駅のリスト
+  const favoriteStations = favorites && favorites.size > 0
+    ? stations.filter((s) => favorites.has(s.stationCode))
+    : [];
+  const favoriteRows = buildRows(favoriteStations, filter);
+
   return (
     <div className="bg-white border-t border-gray-200">
+
+      {/* ⭐ お気に入りセクション */}
+      {favoriteRows.length > 0 && (
+        <div className="px-4 py-3 border-b border-yellow-100 bg-yellow-50">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-bold text-yellow-700">⭐ お気に入りのエリア</h3>
+            {favoriteRows.length >= 2 && onFindSimilar && (
+              <button
+                onClick={onFindSimilar}
+                className="text-xs text-blue-500 hover:text-blue-700 transition-colors font-medium"
+              >
+                似たエリアを探す →
+              </button>
+            )}
+          </div>
+          <div className="space-y-1">
+            {favoriteRows.map((r) => (
+              <StationItem key={r.station.stationCode} row={r} onClick={onStationClick} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-700">
           {prefLabel} — エリア別駅一覧（{filter.targetArea}㎡換算 中央値）
