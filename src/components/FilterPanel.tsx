@@ -157,6 +157,21 @@ export default function FilterPanel({ filter, onChange }: Props) {
         </div>
       </div>
 
+      {/* 徒歩分数バッジ */}
+      {filter.maxWalkMinutes !== null && (
+        <div className="flex items-center gap-1 bg-teal-50 border border-teal-200 rounded-full px-2.5 py-1">
+          <span className="text-xs text-teal-700 font-medium">🚶 徒歩{filter.maxWalkMinutes}分以内</span>
+          <button
+            onClick={() => onChange({ ...filter, maxWalkMinutes: null })}
+            className="text-teal-500 hover:text-teal-700 transition-colors ml-0.5"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* 予算バッジ */}
       {filter.budgetMax !== null && (
         <div className="flex items-center gap-2">
@@ -176,6 +191,29 @@ export default function FilterPanel({ filter, onChange }: Props) {
           <span className="text-xs text-gray-400 whitespace-nowrap">グレー = 予算超</span>
         </div>
       )}
+
+      {/* 徒歩分数 */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-medium text-gray-500 whitespace-nowrap">駅徒歩</span>
+        <div className="flex gap-1">
+          {([null, 5, 10, 15] as const).map((v) => {
+            const active = filter.maxWalkMinutes === v;
+            return (
+              <button
+                key={v ?? "all"}
+                onClick={() => onChange({ ...filter, maxWalkMinutes: v })}
+                className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
+                  active
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                {v === null ? "制限なし" : `〜${v}分`}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ハザードマップ */}
       <div className="flex items-center gap-1.5">

@@ -129,7 +129,7 @@
 
 ### 8E. フィルター改善
 
-- [ ] **G-15** `stations.ts` に `medianWalkMinutes` が含まれているか確認。含まれていれば、FilterState に `maxWalkMinutes: number | null` を追加し、FilterPanel に "徒歩分数上限" トグル（〜5分 / 〜10分 / 〜15分 / 制限なし）を実装
+- [x] **G-15** `stations.ts` に `medianWalkMinutes` が含まれることを確認（1242駅）。FilterState に `maxWalkMinutes: number | null` を追加。FilterPanel に "駅徒歩" トグル（制限なし / 〜5分 / 〜10分 / 〜15分）を実装。適用中はバッジ表示。マーカーTooltipにも徒歩分数を表示
 - [ ] **G-16** `visiblePriceRanges` トグルを FilterPanel 末尾で折りたたみ表示に変更（スペース節約）
 
 ### 8F. Screen 2（物件詳細ページ）設計

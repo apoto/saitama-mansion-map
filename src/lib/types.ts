@@ -61,4 +61,6 @@ export interface FilterState {
   budgetMax: number | null;
   /** 価格表示モード: total = X㎡換算総額, sqm = ㎡単価 */
   displayMode: "total" | "sqm";
+  /** 駅徒歩分数上限（分）。null = 制限なし */
+  maxWalkMinutes: number | null;
 }

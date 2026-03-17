@@ -34,6 +34,13 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
         const stats = getFilteredStats(station, filter);
         if (!stats) return null;
 
+        // 徒歩分数フィルター（medianWalkMinutes が未設定の駅は通過させる）
+        if (
+          filter.maxWalkMinutes !== null &&
+          station.medianWalkMinutes !== undefined &&
+          station.medianWalkMinutes > filter.maxWalkMinutes
+        ) return null;
+
         const displayPrice = getDisplayValue(stats.medianPrice70, filter);
         if (!filter.visiblePriceRanges.has(getPriceRange(displayPrice, filter.displayMode))) return null;
 
@@ -82,6 +89,12 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
                   <span className="text-right">{formatDisplayValue(displayAvg, filter.displayMode)}</span>
                   <span className="text-gray-500">取引件数（データ充実度）</span>
                   <span className="text-right">{stats.count}件</span>
+                  {station.medianWalkMinutes !== undefined && (
+                    <>
+                      <span className="text-gray-500">駅徒歩（中央値）</span>
+                      <span className="text-right">{station.medianWalkMinutes}分</span>
+                    </>
+                  )}
                 </div>
                 {onStationClick && (
                   <div className="mt-2 text-xs text-blue-500 text-center">クリックで詳細を表示</div>

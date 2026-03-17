@@ -50,6 +50,7 @@ export default function Home() {
     showHazard: false,
     budgetMax: getInitialBudget(),
     displayMode: "total",
+    maxWalkMinutes: null,
   });
 
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null);

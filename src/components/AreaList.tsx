@@ -33,6 +33,13 @@ function buildRows(
 ): StationRow[] {
   return stations
     .map((s) => {
+      // 徒歩分数フィルター
+      if (
+        filter.maxWalkMinutes !== null &&
+        s.medianWalkMinutes !== undefined &&
+        s.medianWalkMinutes > filter.maxWalkMinutes
+      ) return null;
+
       const stats = getFilteredStats(s, filter);
       if (!stats) return null;
       const displayPrice = getDisplayValue(stats.medianPrice70, filter);
