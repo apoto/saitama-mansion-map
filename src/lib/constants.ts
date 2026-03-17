@@ -34,7 +34,7 @@ export const AGE_CATEGORY_OPTIONS: { value: AgeCategoryKey; label: string }[] = 
   { value: "age_31_plus", label: "築31年以上" },
 ];
 
-export const TARGET_AREAS = [50, 60, 70, 80, 90] as const;
+export const TARGET_AREAS = [30, 40, 50, 60, 70, 80, 90] as const;
 
 export const PRICE_RANGES: {
   key: PriceRange;

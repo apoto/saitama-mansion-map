@@ -9,6 +9,8 @@ import SuggestPanel from "@/components/SuggestPanel";
 import BudgetPanel from "@/components/BudgetPanel";
 import PrefectureBar from "@/components/PrefectureBar";
 import CrossPrefPanel from "@/components/CrossPrefPanel";
+import OnboardingWizard from "@/components/OnboardingWizard";
+import type { SuggestResponse } from "@/app/api/suggest/route";
 import { stationData } from "@/data/stations";
 import type { FilterState, PriceRange, StationData } from "@/lib/types";
 import { PRICE_RANGES } from "@/lib/constants";
@@ -31,6 +33,13 @@ function getInitialBudget(): number | null {
   return isNaN(n) || n <= 0 ? null : n;
 }
 
+function shouldShowWizard(): boolean {
+  if (typeof window === "undefined") return false;
+  // URLにbudgetがある場合は表示しない（共有リンク等）
+  if (new URLSearchParams(window.location.search).get("budget")) return false;
+  return localStorage.getItem("onboarding_completed") !== "1";
+}
+
 export default function Home() {
   const [filter, setFilter] = useState<FilterState>({
     yearFrom: "2025",
@@ -48,6 +57,19 @@ export default function Home() {
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [crossPrefOpen, setCrossPrefOpen] = useState(false);
   const [highlightedStations, setHighlightedStations] = useState<Set<string>>(new Set());
+  const [budgetCalloutDismissed, setBudgetCalloutDismissed] = useState(false);
+  // G-05: SuggestPanel と OnboardingWizard で共有する提案結果
+  const [suggestQuery, setSuggestQuery] = useState<string | null>(null);
+  const [suggestResult, setSuggestResult] = useState<SuggestResponse | null>(null);
+  // G-01: ウィザード表示フラグ（クライアントのみ判定）
+  const [showWizard, setShowWizard] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("budget_callout_dismissed") === "1") {
+      setBudgetCalloutDismissed(true);
+    }
+    setShowWizard(shouldShowWizard());
+  }, []);
 
   // budgetMax が変わったら URL に反映
   useEffect(() => {
@@ -77,25 +99,17 @@ export default function Home() {
             {filter.yearFrom === filter.yearTo
               ? `${filter.yearTo}年`
               : `${filter.yearFrom}〜${filter.yearTo}年`}
-            取引
+            取引・2025Q3時点のデータ
           </p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
-            onClick={() => setCrossPrefOpen(true)}
-            className="inline-flex items-center gap-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
-          >
-            <span>🗾</span>
-            <span className="hidden sm:inline">他県比較</span>
-            <span className="sm:hidden">他県</span>
-          </button>
-          <button
             onClick={() => setBudgetOpen(true)}
-            className="inline-flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white rounded-full px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 bg-green-500 hover:bg-green-600 text-white rounded-full px-3 py-1.5 text-sm font-medium transition-colors shadow-sm"
           >
             <span>💰</span>
             <span className="hidden sm:inline">予算シミュレーター</span>
-            <span className="sm:hidden">予算</span>
+            <span className="sm:hidden">予算確認</span>
           </button>
           <button
             onClick={() => setSuggestOpen(true)}
@@ -103,15 +117,43 @@ export default function Home() {
           >
             <span>✨</span>
             <span className="hidden sm:inline">AIエリア提案</span>
-            <span className="sm:hidden">AI提案</span>
+            <span className="sm:hidden">AIで探す</span>
           </button>
-          {/* データ鮮度バッジ */}
-          <div className="hidden sm:inline-flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
-            <span className="text-xs text-amber-700">2025Q3時点のデータ</span>
-          </div>
+          <button
+            onClick={() => setCrossPrefOpen(true)}
+            className="inline-flex items-center gap-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
+          >
+            <span>🗾</span>
+            <span className="hidden sm:inline">他県比較</span>
+            <span className="sm:hidden">他県も見る</span>
+          </button>
         </div>
       </header>
+
+      {/* Budget callout */}
+      {filter.budgetMax === null && !budgetCalloutDismissed && (
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-green-50 border-b border-green-100">
+          <button
+            onClick={() => setBudgetOpen(true)}
+            className="flex items-center gap-1.5 text-sm text-green-700 font-medium hover:text-green-900 transition-colors"
+          >
+            <span>💰</span>
+            <span>まず予算を確認してみましょう →</span>
+          </button>
+          <button
+            onClick={() => {
+              localStorage.setItem("budget_callout_dismissed", "1");
+              setBudgetCalloutDismissed(true);
+            }}
+            className="text-green-400 hover:text-green-600 transition-colors flex-shrink-0"
+            aria-label="閉じる"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Prefecture selector */}
       <PrefectureBar selected={selectedPrefecture} onChange={setSelectedPrefecture} />
@@ -179,7 +221,26 @@ export default function Home() {
         }}
         onHighlight={setHighlightedStations}
         stations={stations}
+        initialQuery={suggestQuery}
+        initialResult={suggestResult}
+        onResultChange={(q, r) => { setSuggestQuery(q); setSuggestResult(r); }}
       />
+
+      {/* Onboarding Wizard */}
+      {showWizard && (
+        <OnboardingWizard
+          onComplete={({ budgetMax, targetArea, suggestQuery: q, suggestResult: r }) => {
+            setFilter((f) => ({ ...f, budgetMax, targetArea }));
+            if (q) setSuggestQuery(q);
+            if (r) {
+              setSuggestResult(r);
+              setHighlightedStations(new Set(r.stations.map((s) => s.stationCode)));
+            }
+            setBudgetCalloutDismissed(true);
+            setShowWizard(false);
+          }}
+        />
+      )}
     </div>
   );
 }

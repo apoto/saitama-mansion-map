@@ -95,6 +95,57 @@
 
 ---
 
+## Phase 8: UX改善・オンボーディング（第7回レビューより）
+
+> 第7回チームレビュー（2026-03-17）で設計。G-XX 番号は `docs/09_チームレビューレポート_第7回` のアクションアイテムと対応。
+
+### 8A. 面積拡張（前提作業）
+
+- [x] **G-00** `src/lib/constants.ts`: `TARGET_AREAS` に `30, 40` を追加（`[30, 40, 50, 60, 70, 80, 90]`）
+- [x] **G-14** 30㎡換算で83%が `under3000` に集中することを確認。G-12（PRICE_RANGES_SQM）と合わせて閾値調整予定
+
+### 8B. 初回オンボーディングウィザード
+
+- [x] **G-26** ウィザード STEP 3 のテキスト入力を `localStorage["wizard_area_text"]` に保存（G-25 の自動提案で参照）
+- [x] **G-01** `src/components/OnboardingWizard.tsx` 作成。フルスクリーンモーダル、3ステップ、ステップインジケーター（●○○）
+- [x] **G-02** STEP 1（予算設定）: 既存 BudgetPanel の年収・資産選択 UI を流用。免責文言追加
+- [x] **G-03** STEP 2（世帯人数）: カードUI 3択。30/60/80㎡マッピング
+- [x] **G-04** STEP 3（住みたいエリア・任意）: 自由テキスト + スキップボタン。予算自動付加 + `/api/suggest` 呼び出し
+- [x] **G-05** `page.tsx` に `suggestQuery / suggestResult` を上位 state として追加。`SuggestPanel` に `initialResult / onResultChange` props を追加
+- [x] **G-06** ウィザード完了時に `localStorage["onboarding_completed"]` と `budget_callout_dismissed` を保存
+- [ ] **G-08** `page.tsx`: タイトルを "埼玉県 中古マンション相場" に固定。他県表示中は "(X県表示中)" をサブラベルで表示（F-04 の代替）
+
+### 8C. ㎡単価表示モード
+
+- [ ] **G-11** `FilterState` に `displayMode: "total" | "sqm"` を追加。FilterPanel の面積ボタン横に "総額 / 単価" トグルを追加。単価モード時は面積ボタンを `opacity-40 pointer-events-none`
+- [ ] **G-12** `constants.ts` に `PRICE_RANGES_SQM` を追加（例: 〜30 / 30〜50 / 50〜70 / 70万円/㎡以上）。`getPriceRange / getPriceColor` を `displayMode` で分岐
+- [ ] **G-13** `StationMarkers` / `AreaList` / `StationDetail`: `displayMode === "sqm"` のとき `price70 / 70`（万円/㎡）を表示。ツールチップ文言も "X万円/㎡" に変更
+
+### 8D. お気に入りエリア機能（Phase A）
+
+- [ ] **G-23** `page.tsx` に `favorites: Set<string>` state を追加。localStorage に `favorites` キーで保存。`StationDetail` ドロワーに ★ ボタン（登録・解除）。登録済みマーカーに ★ 表示
+- [ ] **G-24** `AreaList` 先頭に "⭐ お気に入りのエリア" セクションを追加（0件時は非表示）。2件以上になると "似たエリアを探す →" リンクを表示
+- [ ] **G-25** お気に入り登録時に `localStorage["wizard_area_text"]` + 駅コードで `/api/suggest` を自動実行。結果を `localStorage["favorites_suggest_cache"]` にキャッシュ（24h）。次回訪問時に即表示
+
+### 8E. フィルター改善
+
+- [ ] **G-15** `stations.ts` に `medianWalkMinutes` が含まれているか確認。含まれていれば、FilterState に `maxWalkMinutes: number | null` を追加し、FilterPanel に "徒歩分数上限" トグル（〜5分 / 〜10分 / 〜15分 / 制限なし）を実装
+- [ ] **G-16** `visiblePriceRanges` トグルを FilterPanel 末尾で折りたたみ表示に変更（スペース節約）
+
+### 8F. Screen 2（物件詳細ページ）設計
+
+- [ ] **G-19** Screen 2 画面設計: `/station/[code]` 動的ルートの仕様定義。取引一覧・AI要約・外部リンク（SUUMO等）・詳細フィルター（徒歩分数・間取り）の配置
+- [ ] **G-20** フィルターの画面割り当て確定: Screen 1 = 予算・築年数・面積換算・㎡単価。Screen 2 = 徒歩分数・間取り・価格帯詳細
+
+### 8G. 将来：エリアスコアリング準備（Phase 7C 先行設計）
+
+- [ ] **G-21** エリアスコアリング軸の草案定義（飲食・子育て・治安・緑地・ビジネス・交通 + 人口構成・地価変動率）とデータソース整理
+- [ ] **G-22** ライフスタイルプリセット定義と STEP 2 世帯人数との連動仕様（スコアデータ未整備のうちはプリセット定義のみ先行）
+- [ ] **G-27** お気に入り Phase B: スコアデータ完成後、コサイン類似度ベースの高精度類似エリア計算に移行（G-25 の `/api/suggest` 代用を置き換え）
+- [ ] **G-28** 複数お気に入り駅の横並び比較ページ `/compare?stations=code1,code2` の設計・実装
+
+---
+
 ## Phase 4: デプロイ・公開
 
 - [ ] **T-300** GitHub リポジトリ作成 + push

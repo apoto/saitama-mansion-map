@@ -37,14 +37,26 @@ interface Props {
   onSelectStation: (station: StationData) => void;
   onHighlight: (codes: Set<string>) => void;
   stations: StationData[];
+  /** ウィザードで生成済みの結果を引き継ぐ（G-05） */
+  initialQuery?: string | null;
+  initialResult?: SuggestResponse | null;
+  onResultChange?: (query: string, result: SuggestResponse) => void;
 }
 
-export default function SuggestPanel({ open, onClose, onSelectStation, onHighlight, stations }: Props) {
-  const [query, setQuery] = useState("");
+export default function SuggestPanel({ open, onClose, onSelectStation, onHighlight, stations, initialQuery, initialResult, onResultChange }: Props) {
+  const [query, setQuery] = useState(initialQuery ?? "");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<SuggestResponse | null>(null);
+  const [result, setResult] = useState<SuggestResponse | null>(initialResult ?? null);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // ウィザード結果が後から流れてきたとき（初回マウント後に変化する場合）に同期
+  useEffect(() => {
+    if (initialResult && !result) {
+      setResult(initialResult);
+      setQuery(initialQuery ?? "");
+    }
+  }, [initialResult, initialQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (open && textareaRef.current) {
@@ -88,6 +100,7 @@ export default function SuggestPanel({ open, onClose, onSelectStation, onHighlig
       setResult(data);
       setCache(q, data);
       onHighlight(new Set(data.stations.map((s) => s.stationCode)));
+      onResultChange?.(q, data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "検索中にエラーが発生しました。");
     } finally {
