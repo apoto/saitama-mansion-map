@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import type { StationData, FilterState, Transaction } from "@/lib/types";
-import { getDisplayPrice, formatPrice, getRangeAgeStat } from "@/lib/utils";
+import { getDisplayPrice, getDisplayValue, formatDisplayValue, formatPrice, getRangeAgeStat } from "@/lib/utils";
 import type { SimilarResponse } from "@/app/api/similar/route";
 
 const PriceTrendChart = lazy(() => import("./PriceTrendChart"));
@@ -254,11 +254,12 @@ export default function StationDetail({ station, filter, onClose, allStations, o
 
   if (!station) return null;
 
-  const { targetArea, ageCategories, yearFrom, yearTo, budgetMax } = filter;
+  const { targetArea, ageCategories, yearFrom, yearTo, budgetMax, displayMode } = filter;
   const yearLabel = yearFrom === yearTo ? `${yearTo}年` : `${yearFrom}〜${yearTo}年`;
   const allStats = getRangeAgeStat(station, "all", filter);
-  const displayPriceNow = allStats ? getDisplayPrice(allStats.medianPrice70, targetArea) : null;
-  const isOverBudget = budgetMax !== null && displayPriceNow !== null && displayPriceNow > budgetMax;
+  const displayPriceNow = allStats ? getDisplayValue(allStats.medianPrice70, filter) : null;
+  const isOverBudget = displayMode === "total" && budgetMax !== null && displayPriceNow !== null && displayPriceNow > budgetMax;
+  const priceLabel = displayMode === "sqm" ? "㎡単価" : `${targetArea}㎡換算`;
 
   const sorted = [...transactions].sort((a, b) => {
     let diff = 0;
@@ -384,15 +385,15 @@ export default function StationDetail({ station, filter, onClose, allStations, o
               </h3>
               <div className="space-y-1.5">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{targetArea}㎡換算（中央値）</span>
+                  <span className="text-gray-500">{priceLabel}（中央値）</span>
                   <span className="font-bold text-gray-800">
-                    {formatPrice(getDisplayPrice(allStats.medianPrice70, targetArea))}円
+                    {formatDisplayValue(getDisplayValue(allStats.medianPrice70, filter), displayMode)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">{targetArea}㎡換算（平均）</span>
+                  <span className="text-gray-500">{priceLabel}（平均）</span>
                   <span className="text-gray-700">
-                    {formatPrice(getDisplayPrice(allStats.avgPrice70, targetArea))}円
+                    {formatDisplayValue(getDisplayValue(allStats.avgPrice70, filter), displayMode)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -412,7 +413,7 @@ export default function StationDetail({ station, filter, onClose, allStations, o
                       <div key={key} className={`flex justify-between text-xs ${isActive ? "text-gray-700" : "text-gray-300"}`}>
                         <span>{AGE_LABELS[key]}</span>
                         <span className="tabular-nums">
-                          {s.count}件 / {formatPrice(getDisplayPrice(s.medianPrice70, targetArea))}
+                          {s.count}件 / {formatDisplayValue(getDisplayValue(s.medianPrice70, filter), displayMode)}
                         </span>
                       </div>
                     );

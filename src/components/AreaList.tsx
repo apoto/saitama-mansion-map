@@ -6,8 +6,9 @@ import { AREA_ORDER, PREFECTURE_ORDER } from "@/lib/constants";
 import {
   getFilteredStats,
   getPriceColor,
-  getDisplayPrice,
-  formatPrice,
+  getPriceRange,
+  getDisplayValue,
+  formatDisplayValue,
 } from "@/lib/utils";
 
 interface Props {
@@ -34,12 +35,12 @@ function buildRows(
     .map((s) => {
       const stats = getFilteredStats(s, filter);
       if (!stats) return null;
-      const displayPrice = getDisplayPrice(stats.medianPrice70, filter.targetArea);
+      const displayPrice = getDisplayValue(stats.medianPrice70, filter);
       return {
         station: s,
         displayPrice,
         count: stats.count,
-        overBudget: filter.budgetMax !== null && displayPrice > filter.budgetMax,
+        overBudget: filter.displayMode === "total" && filter.budgetMax !== null && displayPrice > filter.budgetMax,
       };
     })
     .filter((x): x is StationRow => x !== null);
@@ -48,9 +49,11 @@ function buildRows(
 function StationItem({
   row,
   onClick,
+  displayMode = "total",
 }: {
   row: StationRow;
   onClick?: (s: StationData) => void;
+  displayMode?: "total" | "sqm";
 }) {
   return (
     <div
@@ -62,12 +65,12 @@ function StationItem({
       <div className="flex items-center gap-2">
         <span
           className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: getPriceColor(row.displayPrice) }}
+          style={{ backgroundColor: getPriceColor(row.displayPrice, displayMode) }}
         />
         <span className="text-gray-700">{row.station.stationName}</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="font-medium tabular-nums">{formatPrice(row.displayPrice)}</span>
+        <span className="font-medium tabular-nums">{formatDisplayValue(row.displayPrice, displayMode)}</span>
         <span className="text-xs text-gray-400 tabular-nums w-8 text-right">{row.count}件</span>
       </div>
     </div>
@@ -133,7 +136,7 @@ function PrefectureAreaList({
           </h3>
           <div className="space-y-1">
             {grouped[area].map((r) => (
-              <StationItem key={r.station.stationCode} row={r} onClick={onStationClick} />
+              <StationItem key={r.station.stationCode} row={r} onClick={onStationClick} displayMode={filter.displayMode} />
             ))}
           </div>
         </div>
@@ -171,7 +174,7 @@ function AllKantoList({
             </h3>
             <div className="space-y-1">
               {prefRows.map((r) => (
-                <StationItem key={r.station.stationCode} row={r} onClick={onStationClick} />
+                <StationItem key={r.station.stationCode} row={r} onClick={onStationClick} displayMode={filter.displayMode} />
               ))}
             </div>
           </div>
@@ -211,7 +214,7 @@ export default function AreaList({ stations, filter, selectedPrefecture, onStati
           </div>
           <div className="space-y-1">
             {favoriteRows.map((r) => (
-              <StationItem key={r.station.stationCode} row={r} onClick={onStationClick} />
+              <StationItem key={r.station.stationCode} row={r} onClick={onStationClick} displayMode={filter.displayMode} />
             ))}
           </div>
         </div>
@@ -219,7 +222,7 @@ export default function AreaList({ stations, filter, selectedPrefecture, onStati
 
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-700">
-          {prefLabel} — エリア別駅一覧（{filter.targetArea}㎡換算 中央値）
+          {prefLabel} — エリア別駅一覧（{filter.displayMode === "sqm" ? "㎡単価 中央値" : `${filter.targetArea}㎡換算 中央値`}）
         </h2>
         {filter.budgetMax !== null && (
           <button

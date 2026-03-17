@@ -117,9 +117,9 @@
 
 ### 8C. ㎡単価表示モード
 
-- [ ] **G-11** `FilterState` に `displayMode: "total" | "sqm"` を追加。FilterPanel の面積ボタン横に "総額 / 単価" トグルを追加。単価モード時は面積ボタンを `opacity-40 pointer-events-none`
-- [ ] **G-12** `constants.ts` に `PRICE_RANGES_SQM` を追加（例: 〜30 / 30〜50 / 50〜70 / 70万円/㎡以上）。`getPriceRange / getPriceColor` を `displayMode` で分岐
-- [ ] **G-13** `StationMarkers` / `AreaList` / `StationDetail`: `displayMode === "sqm"` のとき `price70 / 70`（万円/㎡）を表示。ツールチップ文言も "X万円/㎡" に変更
+- [x] **G-11** `FilterState` に `displayMode: "total" | "sqm"` を追加。FilterPanel に "総額 / 単価" トグルを追加。単価モード時は面積ボタンを `opacity-30 pointer-events-none`
+- [x] **G-12** `constants.ts` に `PRICE_RANGES_SQM` を追加（〜35 / 35〜55 / 55〜80 / 80万円/㎡〜）。`getPriceRange / getPriceColor / getDisplayValue / formatDisplayValue` をモード対応に更新
+- [x] **G-13** `StationMarkers` / `AreaList` / `StationDetail`: `displayMode === "sqm"` のとき `price70 / 70`（万円/㎡）を表示。各ラベル・ツールチップ文言もモードに応じて切り替え
 
 ### 8D. お気に入りエリア機能（Phase A）
 

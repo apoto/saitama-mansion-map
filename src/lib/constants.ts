@@ -36,6 +36,20 @@ export const AGE_CATEGORY_OPTIONS: { value: AgeCategoryKey; label: string }[] = 
 
 export const TARGET_AREAS = [30, 40, 50, 60, 70, 80, 90] as const;
 
+/** ㎡単価モード用の価格レンジ（万円/㎡）。同じ PriceRange キーを流用して visiblePriceRanges と共有 */
+export const PRICE_RANGES_SQM: {
+  key: PriceRange;
+  label: string;
+  color: string;
+  min: number;
+  max: number;
+}[] = [
+  { key: "under3000",  label: "〜35万円/㎡",     color: "#3B82F6", min: 0,  max: 35 },
+  { key: "3000_5000",  label: "35〜55万円/㎡",   color: "#22C55E", min: 35, max: 55 },
+  { key: "5000_7000",  label: "55〜80万円/㎡",   color: "#F97316", min: 55, max: 80 },
+  { key: "over7000",   label: "80万円〜/㎡",      color: "#EF4444", min: 80, max: Infinity },
+];
+
 export const PRICE_RANGES: {
   key: PriceRange;
   label: string;

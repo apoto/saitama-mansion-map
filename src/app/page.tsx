@@ -49,6 +49,7 @@ export default function Home() {
     visiblePriceRanges: ALL_PRICE_RANGES,
     showHazard: false,
     budgetMax: getInitialBudget(),
+    displayMode: "total",
   });
 
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null);

@@ -7,8 +7,8 @@ import {
   getPriceColor,
   getPriceRange,
   getMarkerRadius,
-  getDisplayPrice,
-  formatPrice,
+  getDisplayValue,
+  formatDisplayValue,
 } from "@/lib/utils";
 
 interface Props {
@@ -34,14 +34,15 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
         const stats = getFilteredStats(station, filter);
         if (!stats) return null;
 
-        const displayPrice = getDisplayPrice(stats.medianPrice70, filter.targetArea);
-        if (!filter.visiblePriceRanges.has(getPriceRange(displayPrice))) return null;
+        const displayPrice = getDisplayValue(stats.medianPrice70, filter);
+        if (!filter.visiblePriceRanges.has(getPriceRange(displayPrice, filter.displayMode))) return null;
 
-        const color = getPriceColor(displayPrice);
+        const color = getPriceColor(displayPrice, filter.displayMode);
         const radius = getMarkerRadius(stats.count);
-        const displayAvg = getDisplayPrice(stats.avgPrice70, filter.targetArea);
+        const displayAvg = getDisplayValue(stats.avgPrice70, filter);
         const isHighlighted = hasHighlight && highlightedStations!.has(station.stationCode);
-        const overBudget = filter.budgetMax !== null && displayPrice > filter.budgetMax;
+        // sqmモードでは予算比較できないためグレーアウト無効
+        const overBudget = filter.displayMode === "total" && filter.budgetMax !== null && displayPrice > filter.budgetMax;
         const dimmed = (hasHighlight && !isHighlighted) || overBudget;
 
         return (
@@ -69,12 +70,16 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
                   {station.lines.join(" / ")}
                 </div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                  <span className="text-gray-500">{filter.targetArea}㎡換算（中央値）</span>
-                  <span className="font-semibold text-right">
-                    {formatPrice(displayPrice)}円
+                  <span className="text-gray-500">
+                    {filter.displayMode === "sqm" ? "㎡単価" : `${filter.targetArea}㎡換算`}（中央値）
                   </span>
-                  <span className="text-gray-500">{filter.targetArea}㎡換算（平均）</span>
-                  <span className="text-right">{formatPrice(displayAvg)}円</span>
+                  <span className="font-semibold text-right">
+                    {formatDisplayValue(displayPrice, filter.displayMode)}
+                  </span>
+                  <span className="text-gray-500">
+                    {filter.displayMode === "sqm" ? "㎡単価" : `${filter.targetArea}㎡換算`}（平均）
+                  </span>
+                  <span className="text-right">{formatDisplayValue(displayAvg, filter.displayMode)}</span>
                   <span className="text-gray-500">取引件数（データ充実度）</span>
                   <span className="text-right">{stats.count}件</span>
                 </div>

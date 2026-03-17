@@ -59,4 +59,6 @@ export interface FilterState {
   showHazard: boolean;
   /** 予算上限（万円）。null = フィルタなし */
   budgetMax: number | null;
+  /** 価格表示モード: total = X㎡換算総額, sqm = ㎡単価 */
+  displayMode: "total" | "sqm";
 }

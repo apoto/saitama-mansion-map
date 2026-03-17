@@ -1,7 +1,7 @@
 "use client";
 
 import type { FilterState, AgeCategoryKey, PriceRange } from "@/lib/types";
-import { YEARS, AGE_CATEGORY_OPTIONS, TARGET_AREAS, PRICE_RANGES } from "@/lib/constants";
+import { YEARS, AGE_CATEGORY_OPTIONS, TARGET_AREAS, PRICE_RANGES, PRICE_RANGES_SQM } from "@/lib/constants";
 
 interface Props {
   filter: FilterState;
@@ -74,26 +74,53 @@ export default function FilterPanel({ filter, onChange }: Props) {
         )}
       </div>
 
-      {/* 面積 */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs font-medium text-gray-500 whitespace-nowrap">面積</span>
-        <div className="flex gap-1">
-          {TARGET_AREAS.map((area) => {
-            const active = filter.targetArea === area;
-            return (
-              <button
-                key={area}
-                onClick={() => onChange({ ...filter, targetArea: area })}
-                className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                  active
-                    ? "bg-gray-800 text-white"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}
-              >
-                {area}㎡
-              </button>
-            );
-          })}
+      {/* 表示モード + 面積 */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* 総額 / 単価 トグル */}
+        <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+          <button
+            onClick={() => onChange({ ...filter, displayMode: "total" })}
+            className={`px-2.5 py-1 transition-colors ${
+              filter.displayMode === "total"
+                ? "bg-gray-800 text-white"
+                : "bg-white text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            総額
+          </button>
+          <button
+            onClick={() => onChange({ ...filter, displayMode: "sqm" })}
+            className={`px-2.5 py-1 transition-colors border-l border-gray-200 ${
+              filter.displayMode === "sqm"
+                ? "bg-gray-800 text-white"
+                : "bg-white text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            ㎡単価
+          </button>
+        </div>
+
+        {/* 面積（総額モードのみ有効） */}
+        <div className={`flex items-center gap-1.5 transition-opacity ${filter.displayMode === "sqm" ? "opacity-30 pointer-events-none" : ""}`}>
+          <span className="text-xs font-medium text-gray-500 whitespace-nowrap">面積</span>
+          <div className="flex gap-1">
+            {TARGET_AREAS.map((area) => {
+              const active = filter.targetArea === area;
+              return (
+                <button
+                  key={area}
+                  onClick={() => onChange({ ...filter, targetArea: area })}
+                  className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
+                    active
+                      ? "bg-gray-800 text-white"
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  }`}
+                >
+                  {area}㎡
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -132,18 +159,21 @@ export default function FilterPanel({ filter, onChange }: Props) {
 
       {/* 予算バッジ */}
       {filter.budgetMax !== null && (
-        <div className="flex items-center gap-1 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
-          <span className="text-xs text-green-700 font-medium">
-            予算 {filter.budgetMax.toLocaleString()}万円以下
-          </span>
-          <button
-            onClick={() => onChange({ ...filter, budgetMax: null })}
-            className="text-green-500 hover:text-green-700 transition-colors ml-0.5"
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
+            <span className="text-xs text-green-700 font-medium">
+              予算 {filter.budgetMax.toLocaleString()}万円以下
+            </span>
+            <button
+              onClick={() => onChange({ ...filter, budgetMax: null })}
+              className="text-green-500 hover:text-green-700 transition-colors ml-0.5"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <span className="text-xs text-gray-400 whitespace-nowrap">グレー = 予算超</span>
         </div>
       )}
 
@@ -167,7 +197,7 @@ export default function FilterPanel({ filter, onChange }: Props) {
       <div className="flex items-center gap-1.5 sm:ml-auto">
         <span className="text-xs font-medium text-gray-500 whitespace-nowrap">価格帯</span>
         <div className="flex gap-1">
-          {PRICE_RANGES.map((range) => {
+          {(filter.displayMode === "sqm" ? PRICE_RANGES_SQM : PRICE_RANGES).map((range) => {
             const active = filter.visiblePriceRanges.has(range.key);
             return (
               <button

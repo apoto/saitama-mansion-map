@@ -1,5 +1,5 @@
 import type { StationData, FilterState, PriceRange, AgeCategoryKey, AgeCategory, PriceStats } from "./types";
-import { PRICE_RANGES, YEARS } from "./constants";
+import { PRICE_RANGES, PRICE_RANGES_SQM, YEARS } from "./constants";
 
 function mergeStats(
   keys: AgeCategoryKey[],
@@ -73,20 +73,35 @@ export function getRangeAgeStat(
   return mergeStatsList(statsList);
 }
 
-/** 70㎡ベースの価格を targetArea 換算に変換 */
+/** 70㎡ベースの価格を targetArea 換算に変換（総額モード用） */
 export function getDisplayPrice(price70: number, targetArea: number): number {
   return Math.round((price70 / 70) * targetArea);
 }
 
-export function getPriceRange(displayPrice: number): PriceRange {
-  for (const range of PRICE_RANGES) {
+/** FilterState の displayMode に応じた表示値を返す */
+export function getDisplayValue(price70: number, filter: FilterState): number {
+  if (filter.displayMode === "sqm") return Math.round(price70 / 70);
+  return Math.round((price70 / 70) * filter.targetArea);
+}
+
+/** displayMode に応じた価格フォーマット文字列を返す */
+export function formatDisplayValue(value: number, displayMode: "total" | "sqm"): string {
+  if (displayMode === "sqm") return `${value.toLocaleString()}万円/㎡`;
+  if (value >= 10000) return `${(value / 10000).toFixed(1)}億円`;
+  return `${value.toLocaleString()}万円`;
+}
+
+export function getPriceRange(displayPrice: number, displayMode: "total" | "sqm" = "total"): PriceRange {
+  const ranges = displayMode === "sqm" ? PRICE_RANGES_SQM : PRICE_RANGES;
+  for (const range of ranges) {
     if (displayPrice < range.max) return range.key;
   }
   return "over7000";
 }
 
-export function getPriceColor(displayPrice: number): string {
-  const range = PRICE_RANGES.find((r) => r.key === getPriceRange(displayPrice));
+export function getPriceColor(displayPrice: number, displayMode: "total" | "sqm" = "total"): string {
+  const ranges = displayMode === "sqm" ? PRICE_RANGES_SQM : PRICE_RANGES;
+  const range = ranges.find((r) => r.key === getPriceRange(displayPrice, displayMode));
   return range?.color ?? "#6B7280";
 }
 
