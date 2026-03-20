@@ -34,6 +34,9 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
         const stats = getFilteredStats(station, filter);
         if (!stats) return null;
 
+        // 路線フィルター
+        if (filter.lineFilter && !station.lines.includes(filter.lineFilter)) return null;
+
         // 徒歩分数フィルター（medianWalkMinutes が未設定の駅は通過させる）
         if (
           filter.maxWalkMinutes !== null &&
@@ -50,6 +53,7 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
         const isHighlighted = hasHighlight && highlightedStations!.has(station.stationCode);
         // sqmモードでは予算比較できないためグレーアウト無効
         const overBudget = filter.displayMode === "total" && filter.budgetMax !== null && displayPrice > filter.budgetMax;
+        const lowData = stats.count < 10;
         const dimmed = (hasHighlight && !isHighlighted) || overBudget;
 
         return (
@@ -61,8 +65,8 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
               fillColor: overBudget ? "#9ca3af" : color,
               color: isHighlighted ? "#1d4ed8" : overBudget ? "#9ca3af" : color,
               weight: isHighlighted ? 3 : 2,
-              opacity: dimmed ? 0.25 : 0.9,
-              fillOpacity: dimmed ? 0.12 : isHighlighted ? 0.75 : 0.55,
+              opacity: dimmed ? 0.25 : lowData ? 0.4 : 0.9,
+              fillOpacity: dimmed ? 0.12 : lowData ? 0.2 : isHighlighted ? 0.75 : 0.55,
             }}
             eventHandlers={
               onStationClick
@@ -87,8 +91,10 @@ export default function StationMarkers({ stations, filter, onStationClick, highl
                     {filter.displayMode === "sqm" ? "㎡単価" : `${filter.targetArea}㎡換算`}（平均）
                   </span>
                   <span className="text-right">{formatDisplayValue(displayAvg, filter.displayMode)}</span>
-                  <span className="text-gray-500">取引件数（データ充実度）</span>
-                  <span className="text-right">{stats.count}件</span>
+                  <span className="text-gray-500">取引件数</span>
+                  <span className="text-right">
+                    {stats.count}件{lowData && <span className="ml-1 text-amber-500 text-xs">参考値</span>}
+                  </span>
                   {station.medianWalkMinutes !== undefined && (
                     <>
                       <span className="text-gray-500">駅徒歩（中央値）</span>

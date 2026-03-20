@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import type { StationData, FilterState, Transaction } from "@/lib/types";
-import { getDisplayPrice, getDisplayValue, formatDisplayValue, formatPrice, getRangeAgeStat } from "@/lib/utils";
+import { getDisplayPrice, getDisplayValue, formatDisplayValue, formatPrice, getRangeAgeStat, formatPeriod } from "@/lib/utils";
 import type { SimilarResponse } from "@/app/api/similar/route";
 
 const PriceTrendChart = lazy(() => import("./PriceTrendChart"));
@@ -547,7 +547,7 @@ export default function StationDetail({ station, filter, onClose, allStations, o
                         <td className="py-1 tabular-nums pr-2">{tx.age !== null ? `${tx.age}年` : "—"}</td>
                         <td className="py-1 pr-2">{tx.floorPlan || "—"}</td>
                         <td className="py-1 text-gray-400">
-                          {tx.period.replace("年第", "年Q").replace("四半期", "")}
+                          {formatPeriod(tx.period)}
                         </td>
                       </tr>
                     ))}

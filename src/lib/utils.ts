@@ -181,3 +181,13 @@ export function buildTrendData(
     return { year, stationPrice, linePrice, stationCount, lineCountPerStation };
   });
 }
+
+
+/** "2024年第3四半期" → "2024年7〜9月" */
+export function formatPeriod(period: string): string {
+  return period
+    .replace("第1四半期", "1〜3月")
+    .replace("第2四半期", "4〜6月")
+    .replace("第3四半期", "7〜9月")
+    .replace("第4四半期", "10〜12月");
+}

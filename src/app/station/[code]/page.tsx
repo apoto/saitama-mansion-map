@@ -10,6 +10,7 @@ import {
   formatDisplayValue,
   formatPrice,
   getRangeAgeStat,
+  formatPeriod,
 } from "@/lib/utils";
 import type { SimilarResponse } from "@/app/api/similar/route";
 
@@ -218,7 +219,7 @@ export default function StationPage() {
   }
 
   // ── 計算 ──────────────────────────────────────────────────
-  const filter = { targetArea, displayMode, ageCategories: new Set<never>(), yearFrom: "2025", yearTo: "2025", visiblePriceRanges: new Set<never>(), showHazard: false, budgetMax, maxWalkMinutes: null };
+  const filter = { targetArea, displayMode, ageCategories: new Set<never>(), yearFrom: "2025", yearTo: "2025", visiblePriceRanges: new Set<never>(), showHazard: false, budgetMax, maxWalkMinutes: null, lineFilter: null };
   const allStats = getRangeAgeStat(station, "all", filter);
   const isOverBudget = displayMode === "total" && budgetMax !== null && allStats !== null && getDisplayValue(allStats.medianPrice70, filter) > budgetMax;
   const priceLabel = displayMode === "sqm" ? "㎡単価" : `${targetArea}㎡換算`;
@@ -437,7 +438,7 @@ export default function StationPage() {
                       <td className="py-1 tabular-nums pr-2">{tx.age !== null ? `${tx.age}年` : "—"}</td>
                       <td className="py-1 pr-2">{tx.floorPlan || "—"}</td>
                       <td className="py-1 tabular-nums pr-2">{tx.walkMinutes !== undefined && tx.walkMinutes !== null ? `${tx.walkMinutes}分` : "—"}</td>
-                      <td className="py-1 text-gray-400">{tx.period.replace("年第", "年Q").replace("四半期", "")}</td>
+                      <td className="py-1 text-gray-400">{formatPeriod(tx.period)}</td>
                     </tr>
                   ))}
                 </tbody>

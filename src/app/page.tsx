@@ -51,10 +51,21 @@ export default function Home() {
     budgetMax: getInitialBudget(),
     displayMode: "total",
     maxWalkMinutes: null,
+    lineFilter: null,
   });
 
   const [selectedStation, setSelectedStation] = useState<StationData | null>(null);
   const [selectedPrefecture, setSelectedPrefecture] = useState<string | null>("埼玉県");
+
+  // 路線フィルター用: 現在選択中の都道府県の路線一覧（ソート済み）
+  const allLines = useMemo(() => {
+    const prefStations = selectedPrefecture
+      ? stationData.filter((s) => s.prefecture === selectedPrefecture)
+      : stationData;
+    const lineSet = new Set<string>();
+    prefStations.forEach((s) => s.lines.forEach((l) => lineSet.add(l)));
+    return [...lineSet].sort((a, b) => a.localeCompare(b, "ja"));
+  }, [selectedPrefecture]);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [crossPrefOpen, setCrossPrefOpen] = useState(false);
@@ -217,7 +228,7 @@ export default function Home() {
       <PrefectureBar selected={selectedPrefecture} onChange={setSelectedPrefecture} />
 
       {/* Filters */}
-      <FilterPanel filter={filter} onChange={setFilter} />
+      <FilterPanel filter={filter} onChange={setFilter} onResetWizard={() => setShowWizard(true)} allLines={allLines} />
 
       {/* Map */}
       <div className="flex-1 min-h-0">

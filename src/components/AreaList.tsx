@@ -33,6 +33,9 @@ function buildRows(
 ): StationRow[] {
   return stations
     .map((s) => {
+      // 路線フィルター
+      if (filter.lineFilter && !s.lines.includes(filter.lineFilter)) return null;
+
       // 徒歩分数フィルター
       if (
         filter.maxWalkMinutes !== null &&

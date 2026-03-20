@@ -63,4 +63,6 @@ export interface FilterState {
   displayMode: "total" | "sqm";
   /** 駅徒歩分数上限（分）。null = 制限なし */
   maxWalkMinutes: number | null;
+  /** 路線フィルター。null = すべて表示 */
+  lineFilter: string | null;
 }

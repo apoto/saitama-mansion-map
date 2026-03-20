@@ -7,9 +7,11 @@ import { YEARS, AGE_CATEGORY_OPTIONS, TARGET_AREAS, PRICE_RANGES, PRICE_RANGES_S
 interface Props {
   filter: FilterState;
   onChange: (filter: FilterState) => void;
+  onResetWizard?: () => void;
+  allLines?: string[];
 }
 
-export default function FilterPanel({ filter, onChange }: Props) {
+export default function FilterPanel({ filter, onChange, onResetWizard, allLines = [] }: Props) {
   const [priceRangeOpen, setPriceRangeOpen] = useState(false);
   const toggleAgeCategory = (key: AgeCategoryKey) => {
     const next = new Set(filter.ageCategories);
@@ -75,6 +77,32 @@ export default function FilterPanel({ filter, onChange }: Props) {
           </button>
         )}
       </div>
+
+      {/* 路線フィルター */}
+      {allLines.length > 0 && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-gray-500 whitespace-nowrap">路線</span>
+          <select
+            value={filter.lineFilter ?? ""}
+            onChange={(e) => onChange({ ...filter, lineFilter: e.target.value || null })}
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">すべて</option>
+            {allLines.map((line) => (
+              <option key={line} value={line}>{line}</option>
+            ))}
+          </select>
+          {filter.lineFilter && (
+            <button
+              onClick={() => onChange({ ...filter, lineFilter: null })}
+              className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+              title="路線フィルターを解除"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
 
       {/* 表示モード + 面積 */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -195,6 +223,20 @@ export default function FilterPanel({ filter, onChange }: Props) {
           <span>ハザード</span>
         </button>
       </div>
+
+      {/* 設定やり直し */}
+      {onResetWizard && (
+        <button
+          onClick={() => {
+            try { localStorage.removeItem("onboarding_completed"); } catch {}
+            onResetWizard();
+          }}
+          className="text-xs text-gray-400 hover:text-gray-600 whitespace-nowrap transition-colors"
+          title="初期設定をやり直す"
+        >
+          ⚙ 設定やり直し
+        </button>
+      )}
 
       {/* 価格帯（折りたたみ） */}
       <div className="flex items-center gap-1.5 sm:ml-auto">
