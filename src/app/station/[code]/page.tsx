@@ -195,6 +195,61 @@ export default function StationPage() {
     } finally { setSimilarLoading(false); }
   }, [station, budgetMax, targetArea]);
 
+  // ── 物件査定補助 ─────────────────────────────────────────
+  const [checkArea, setCheckArea] = useState(String(initArea));
+  const [checkAge, setCheckAge] = useState("");
+  const [checkWalk, setCheckWalk] = useState("");
+  const [checkPrice, setCheckPrice] = useState("");
+  const [checkResult, setCheckResult] = useState<{
+    count: number;
+    medianUnitPrice: number;
+    fairPrice: number;
+    diffPct: number;
+    inputUnitPrice: number;
+  } | { count: number; insufficient: true } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  function runCheck() {
+    const area = parseFloat(checkArea);
+    const age = parseFloat(checkAge);
+    const walk = checkWalk !== "" ? parseFloat(checkWalk) : null;
+    const price = parseFloat(checkPrice);
+    if (isNaN(area) || isNaN(age) || isNaN(price) || area <= 0 || price <= 0) return;
+
+    const similar = transactions.filter((tx) => {
+      const areaOk = Math.abs(tx.area - area) <= 15;
+      const ageOk = tx.age !== null && Math.abs(tx.age - age) <= 7;
+      const walkOk = walk === null || tx.walkMinutes === null || Math.abs((tx.walkMinutes ?? 0) - walk) <= 5;
+      return areaOk && ageOk && walkOk;
+    });
+
+    if (similar.length < 3) {
+      setCheckResult({ count: similar.length, insufficient: true });
+      return;
+    }
+
+    const unitPrices = similar.map((tx) => tx.price / tx.area).sort((a, b) => a - b);
+    const mid = Math.floor(unitPrices.length / 2);
+    const medianUnitPrice = unitPrices.length % 2 === 0
+      ? (unitPrices[mid - 1] + unitPrices[mid]) / 2
+      : unitPrices[mid];
+    const fairPrice = medianUnitPrice * area;
+    const inputUnitPrice = price / area;
+    const diffPct = ((price - fairPrice) / fairPrice) * 100;
+    setCheckResult({ count: similar.length, medianUnitPrice, fairPrice, diffPct, inputUnitPrice });
+  }
+
+  function buildCopyText() {
+    if (!checkResult || "insufficient" in checkResult) return "";
+    const { count, medianUnitPrice, fairPrice, diffPct } = checkResult;
+    const sign = diffPct >= 0 ? "+" : "";
+    return `【相場比較メモ】${station?.stationName}駅\n` +
+      `条件: ${checkArea}㎡・築${checkAge}年・徒歩${checkWalk || "―"}分\n` +
+      `類似成約（${count}件）中央値: 約${Math.round(fairPrice)}万円（㎡単価 ${medianUnitPrice.toFixed(1)}万円/㎡）\n` +
+      `ご提示価格: ${checkPrice}万円（相場比 ${sign}${diffPct.toFixed(1)}%）\n` +
+      `出典: 国土交通省 不動産情報ライブラリ（実成約データ）`;
+  }
+
   // ソート・フィルタ
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc((v) => !v);
@@ -443,6 +498,90 @@ export default function StationPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </div>
+
+        {/* ── 物件査定補助 ──────────────────────────────────────── */}
+        <div className="bg-white rounded-xl border border-gray-100 px-4 py-4">
+          <h2 className="text-sm font-semibold text-gray-700 mb-0.5">物件の適正価格チェック</h2>
+          <p className="text-xs text-gray-400 mb-3">SUUMOなどで気になった物件のスペックを入力すると、上の成約データと比較します。</p>
+
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {[
+              { label: "面積（㎡）", value: checkArea, set: setCheckArea, placeholder: "70" },
+              { label: "築年数（年）", value: checkAge, set: setCheckAge, placeholder: "15" },
+              { label: "駅徒歩（分）任意", value: checkWalk, set: setCheckWalk, placeholder: "8" },
+              { label: "価格（万円）", value: checkPrice, set: setCheckPrice, placeholder: "4500" },
+            ].map(({ label, value, set, placeholder }) => (
+              <div key={label}>
+                <label className="block text-xs text-gray-500 mb-0.5">{label}</label>
+                <input
+                  type="number"
+                  value={value}
+                  onChange={(e) => { set(e.target.value); setCheckResult(null); }}
+                  placeholder={placeholder}
+                  className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-800 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={runCheck}
+            disabled={transactions.length === 0}
+            className="w-full py-2 text-sm font-medium bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-40"
+          >
+            {transactions.length === 0 ? "データ読み込み中..." : "相場と比べる"}
+          </button>
+
+          {checkResult && (
+            <div className="mt-3">
+              {"insufficient" in checkResult ? (
+                <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                  類似条件の成約データが少なすぎます（{checkResult.count}件）。面積・築年数の範囲を広げて再度お試しください。
+                </p>
+              ) : (
+                <div className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-3 space-y-2">
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>類似成約件数</span>
+                    <span className="font-medium text-gray-700">{checkResult.count}件</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>成約㎡単価（中央値）</span>
+                    <span className="font-medium text-gray-700">{checkResult.medianUnitPrice.toFixed(1)}万円/㎡</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>適正価格の目安（{checkArea}㎡換算）</span>
+                    <span className="font-medium text-gray-700">約{Math.round(checkResult.fairPrice).toLocaleString()}万円</span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
+                    <span className="text-xs text-gray-500">相場との比較</span>
+                    <span className={`text-base font-bold ${checkResult.diffPct > 5 ? "text-red-500" : checkResult.diffPct < -5 ? "text-green-600" : "text-gray-700"}`}>
+                      {checkResult.diffPct >= 0 ? "+" : ""}{checkResult.diffPct.toFixed(1)}%
+                    </span>
+                  </div>
+                  {Math.abs(checkResult.diffPct) > 5 && (
+                    <p className="text-xs text-gray-500">
+                      {checkResult.diffPct > 5
+                        ? `相場より約${Math.round(parseFloat(checkPrice) - checkResult.fairPrice).toLocaleString()}万円高い設定です。交渉の余地があるかもしれません。`
+                        : `相場より約${Math.round(checkResult.fairPrice - parseFloat(checkPrice)).toLocaleString()}万円安い設定です。`}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(buildCopyText()).then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      });
+                    }}
+                    className="w-full mt-1 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                  >
+                    {copied ? "✓ コピーしました" : "交渉メモをコピー"}
+                  </button>
+                  <p className="text-xs text-gray-400">※ 国土交通省の過去成約データによる参考値です。実際の取引価格を保証するものではありません。</p>
+                </div>
+              )}
             </div>
           )}
         </div>
