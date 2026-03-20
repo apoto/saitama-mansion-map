@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { StationData } from "@/lib/types";
 import type { CrossPrefResponse, CrossPrefStation } from "@/app/api/cross-prefecture/route";
 import { PREFECTURE_ORDER, PREFECTURE_VIEWS } from "@/lib/constants";
@@ -13,6 +13,8 @@ interface Props {
   defaultPrefecture: string | null;
   /** 予算上限（初期値） */
   defaultBudget: number | null;
+  /** 面積（初期値） */
+  defaultArea?: number;
   onSelectStation?: (station: StationData) => void;
   stations: StationData[];
 }
@@ -58,13 +60,23 @@ export default function CrossPrefPanel({
   onClose,
   defaultPrefecture,
   defaultBudget,
+  defaultArea,
   onSelectStation,
   stations,
 }: Props) {
   const [pref, setPref] = useState(defaultPrefecture ?? "埼玉県");
   const [budget, setBudget] = useState(defaultBudget ?? 4000);
-  const [area, setArea] = useState(70);
+  const [area, setArea] = useState(defaultArea ?? 70);
   const [loading, setLoading] = useState(false);
+
+  // パネルを開くたびに最新の絞り込み条件を反映
+  useEffect(() => {
+    if (open) {
+      setPref(defaultPrefecture ?? "埼玉県");
+      if (defaultBudget !== null) setBudget(defaultBudget);
+      if (defaultArea !== undefined) setArea(defaultArea);
+    }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const [result, setResult] = useState<(CrossPrefResponse & {
     baseStations: CrossPrefStation[];
     baseStationCount: number;
@@ -168,7 +180,7 @@ export default function CrossPrefPanel({
                   onChange={(e) => setArea(Number(e.target.value))}
                   className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 >
-                  {[50, 60, 70, 80, 90].map((a) => (
+                  {[30, 40, 50, 60, 70, 80, 90].map((a) => (
                     <option key={a} value={a}>{a}㎡</option>
                   ))}
                 </select>

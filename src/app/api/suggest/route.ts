@@ -230,7 +230,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { query } = await req.json();
+  const { query, targetArea: bodyTargetArea } = await req.json();
   if (!query?.trim()) {
     return Response.json({ error: "query is required" }, { status: 400 });
   }
@@ -238,10 +238,14 @@ export async function POST(req: Request) {
     return Response.json({ error: `query は${MAX_QUERY_LENGTH}文字以内にしてください` }, { status: 400 });
   }
   const sanitizedQuery = query.trim().slice(0, MAX_QUERY_LENGTH);
+  // UIで設定中の面積（万円換算に使用）。クエリに面積が含まれる場合はそちらを優先
+  const uiTargetArea = typeof bodyTargetArea === "number" && bodyTargetArea > 0 ? bodyTargetArea : 70;
 
   const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY ?? "" });
 
   const conditions = await parseConditions(ai, sanitizedQuery);
+  // クエリに面積指定がない場合はUIの面積設定を使う
+  if (!conditions.targetArea) conditions.targetArea = uiTargetArea;
   const candidates = matchStations(conditions);
 
   if (candidates.length === 0) {

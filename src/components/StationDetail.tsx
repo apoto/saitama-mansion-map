@@ -316,6 +316,12 @@ export default function StationDetail({ station, filter, onClose, allStations, o
             <p className="text-xs text-gray-400 mt-0.5">
               {station.lines.length > 0 ? station.lines.join(" / ") : station.area}
             </p>
+            <a
+              href={`/station/${station.stationCode}?area=${targetArea}&mode=${displayMode}${budgetMax ? `&budget=${budgetMax}` : ""}`}
+              className="text-xs text-blue-500 hover:underline mt-0.5 inline-block"
+            >
+              詳細ページで見る →
+            </a>
           </div>
           <div className="flex items-center gap-1">
             {onFavoriteToggle && (
@@ -504,7 +510,7 @@ export default function StationDetail({ station, filter, onClose, allStations, o
 
           {/* ④ 取引一覧 */}
           <div className="px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <h3 className="text-sm font-semibold text-gray-700">
                 取引一覧
                 {transactions.length > 0 && (
@@ -515,6 +521,7 @@ export default function StationDetail({ station, filter, onClose, allStations, o
                 <span className="text-xs text-blue-500">選択築年数をハイライト</span>
               )}
             </div>
+            <p className="text-xs text-gray-400 mb-2">国土交通省の実成約データです。業者の提示価格と比べてみてください。</p>
 
             {txLoading ? (
               <div className="text-xs text-gray-400 py-4 text-center">読み込み中...</div>

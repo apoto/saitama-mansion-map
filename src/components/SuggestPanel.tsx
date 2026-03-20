@@ -7,9 +7,13 @@ import type { SuggestResponse, SuggestStation } from "@/app/api/suggest/route";
 const CACHE_KEY_PREFIX = "suggest_cache_";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
 
-function getCached(query: string): SuggestResponse | null {
+function cacheKey(query: string, targetArea: number) {
+  return `${CACHE_KEY_PREFIX}${query}_${targetArea}`;
+}
+
+function getCached(query: string, targetArea: number): SuggestResponse | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY_PREFIX + query);
+    const raw = localStorage.getItem(cacheKey(query, targetArea));
     if (!raw) return null;
     const { data, ts } = JSON.parse(raw);
     if (Date.now() - ts > CACHE_TTL) return null;
@@ -19,9 +23,9 @@ function getCached(query: string): SuggestResponse | null {
   }
 }
 
-function setCache(query: string, data: SuggestResponse) {
+function setCache(query: string, targetArea: number, data: SuggestResponse) {
   try {
-    localStorage.setItem(CACHE_KEY_PREFIX + query, JSON.stringify({ data, ts: Date.now() }));
+    localStorage.setItem(cacheKey(query, targetArea), JSON.stringify({ data, ts: Date.now() }));
   } catch {}
 }
 
@@ -37,13 +41,15 @@ interface Props {
   onSelectStation: (station: StationData) => void;
   onHighlight: (codes: Set<string>) => void;
   stations: StationData[];
+  /** UIで設定中の面積換算（万円計算に使用） */
+  targetArea?: number;
   /** ウィザードで生成済みの結果を引き継ぐ（G-05） */
   initialQuery?: string | null;
   initialResult?: SuggestResponse | null;
   onResultChange?: (query: string, result: SuggestResponse) => void;
 }
 
-export default function SuggestPanel({ open, onClose, onSelectStation, onHighlight, stations, initialQuery, initialResult, onResultChange }: Props) {
+export default function SuggestPanel({ open, onClose, onSelectStation, onHighlight, stations, targetArea, initialQuery, initialResult, onResultChange }: Props) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SuggestResponse | null>(initialResult ?? null);
@@ -74,7 +80,8 @@ export default function SuggestPanel({ open, onClose, onSelectStation, onHighlig
     const q = query.trim();
     if (!q) return;
 
-    const cached = getCached(q);
+    const area = targetArea ?? 70;
+    const cached = getCached(q, area);
     if (cached) {
       setResult(cached);
       onHighlight(new Set(cached.stations.map((s) => s.stationCode)));
@@ -89,7 +96,7 @@ export default function SuggestPanel({ open, onClose, onSelectStation, onHighlig
       const res = await fetch("/api/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
+        body: JSON.stringify({ query: q, targetArea: targetArea ?? 70 }),
       });
       if (res.status === 429) {
         const body = await res.json().catch(() => ({}));
@@ -98,7 +105,7 @@ export default function SuggestPanel({ open, onClose, onSelectStation, onHighlig
       if (!res.ok) throw new Error("APIエラーが発生しました");
       const data: SuggestResponse = await res.json();
       setResult(data);
-      setCache(q, data);
+      setCache(q, area, data);
       onHighlight(new Set(data.stations.map((s) => s.stationCode)));
       onResultChange?.(q, data);
     } catch (err) {

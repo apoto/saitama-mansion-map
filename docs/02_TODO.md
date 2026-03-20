@@ -113,7 +113,7 @@
 - [x] **G-04** STEP 3（住みたいエリア・任意）: 自由テキスト + スキップボタン。予算自動付加 + `/api/suggest` 呼び出し
 - [x] **G-05** `page.tsx` に `suggestQuery / suggestResult` を上位 state として追加。`SuggestPanel` に `initialResult / onResultChange` props を追加
 - [x] **G-06** ウィザード完了時に `localStorage["onboarding_completed"]` と `budget_callout_dismissed` を保存
-- [ ] **G-08** `page.tsx`: タイトルを "埼玉県 中古マンション相場" に固定。他県表示中は "(X県表示中)" をサブラベルで表示（F-04 の代替）
+- [x] **G-08** `page.tsx`: タイトルを "埼玉県 中古マンション相場" に固定。他県表示中は "(X県表示中)" をサブラベルで表示（F-04 の代替）
 
 ### 8C. ㎡単価表示モード
 
@@ -123,19 +123,19 @@
 
 ### 8D. お気に入りエリア機能（Phase A）
 
-- [ ] **G-23** `page.tsx` に `favorites: Set<string>` state を追加。localStorage に `favorites` キーで保存。`StationDetail` ドロワーに ★ ボタン（登録・解除）。登録済みマーカーに ★ 表示
-- [ ] **G-24** `AreaList` 先頭に "⭐ お気に入りのエリア" セクションを追加（0件時は非表示）。2件以上になると "似たエリアを探す →" リンクを表示
-- [ ] **G-25** お気に入り登録時に `localStorage["wizard_area_text"]` + 駅コードで `/api/suggest` を自動実行。結果を `localStorage["favorites_suggest_cache"]` にキャッシュ（24h）。次回訪問時に即表示
+- [x] **G-23** `page.tsx` に `favorites: Set<string>` state を追加。localStorage に `favorites` キーで保存。`StationDetail` ドロワーに ★ ボタン（登録・解除）。登録済みマーカーに ★ 表示
+- [x] **G-24** `AreaList` 先頭に "⭐ お気に入りのエリア" セクションを追加（0件時は非表示）。2件以上になると "似たエリアを探す →" リンクを表示
+- [x] **G-25** お気に入り登録時に `localStorage["wizard_area_text"]` + 駅コードで `/api/suggest` を自動実行。結果を `localStorage["favorites_suggest_cache"]` にキャッシュ（24h）。次回訪問時に即表示
 
 ### 8E. フィルター改善
 
-- [x] **G-15** `stations.ts` に `medianWalkMinutes` が含まれることを確認（1242駅）。FilterState に `maxWalkMinutes: number | null` を追加。FilterPanel に "駅徒歩" トグル（制限なし / 〜5分 / 〜10分 / 〜15分）を実装。適用中はバッジ表示。マーカーTooltipにも徒歩分数を表示
-- [ ] **G-16** `visiblePriceRanges` トグルを FilterPanel 末尾で折りたたみ表示に変更（スペース節約）
+- [x] **G-15** `FilterState` に `maxWalkMinutes: number | null` を追加。マーカーTooltipに徒歩分数を表示。※FilterPanel の駅徒歩トグルUIは Screen 2（/station/[code]）に移動する方針に変更（第8回レビューより）
+- [x] **G-16** `visiblePriceRanges` トグルを FilterPanel 末尾で折りたたみ表示に変更（スペース節約）
 
 ### 8F. Screen 2（物件詳細ページ）設計
 
-- [ ] **G-19** Screen 2 画面設計: `/station/[code]` 動的ルートの仕様定義。取引一覧・AI要約・外部リンク（SUUMO等）・詳細フィルター（徒歩分数・間取り）の配置
-- [ ] **G-20** フィルターの画面割り当て確定: Screen 1 = 予算・築年数・面積換算・㎡単価。Screen 2 = 徒歩分数・間取り・価格帯詳細
+- [x] **G-19** Screen 2 実装: `app/station/[code]/page.tsx` 作成。価格サマリ・価格推移グラフ・AI傾向分析・取引一覧（徒歩分数列追加）・SUUMO外部リンク・類似エリア提案（予算超過時）。URLパラメータで area/mode/budget を引き継ぎ。StationDetailドロワーに「詳細ページで見る →」リンク追加
+- [x] **G-20** フィルターの画面割り当て確定: Screen 1 = 予算・築年数・面積換算・㎡単価。Screen 2 = 徒歩分数（取引一覧列）・間取り（取引一覧列）・価格帯詳細
 
 ### 8G. 将来：エリアスコアリング準備（Phase 7C 先行設計）
 

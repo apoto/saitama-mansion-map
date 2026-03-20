@@ -85,7 +85,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
       const res = await fetch("/api/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, targetArea }),
       });
       if (!res.ok) throw new Error("APIエラー");
       const data: SuggestResponse = await res.json();

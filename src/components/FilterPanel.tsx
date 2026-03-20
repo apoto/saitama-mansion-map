@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { FilterState, AgeCategoryKey, PriceRange } from "@/lib/types";
 import { YEARS, AGE_CATEGORY_OPTIONS, TARGET_AREAS, PRICE_RANGES, PRICE_RANGES_SQM } from "@/lib/constants";
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function FilterPanel({ filter, onChange }: Props) {
+  const [priceRangeOpen, setPriceRangeOpen] = useState(false);
   const toggleAgeCategory = (key: AgeCategoryKey) => {
     const next = new Set(filter.ageCategories);
     if (next.has(key)) {
@@ -157,21 +159,6 @@ export default function FilterPanel({ filter, onChange }: Props) {
         </div>
       </div>
 
-      {/* 徒歩分数バッジ */}
-      {filter.maxWalkMinutes !== null && (
-        <div className="flex items-center gap-1 bg-teal-50 border border-teal-200 rounded-full px-2.5 py-1">
-          <span className="text-xs text-teal-700 font-medium">🚶 徒歩{filter.maxWalkMinutes}分以内</span>
-          <button
-            onClick={() => onChange({ ...filter, maxWalkMinutes: null })}
-            className="text-teal-500 hover:text-teal-700 transition-colors ml-0.5"
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
-
       {/* 予算バッジ */}
       {filter.budgetMax !== null && (
         <div className="flex items-center gap-2">
@@ -192,28 +179,6 @@ export default function FilterPanel({ filter, onChange }: Props) {
         </div>
       )}
 
-      {/* 徒歩分数 */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs font-medium text-gray-500 whitespace-nowrap">駅徒歩</span>
-        <div className="flex gap-1">
-          {([null, 5, 10, 15] as const).map((v) => {
-            const active = filter.maxWalkMinutes === v;
-            return (
-              <button
-                key={v ?? "all"}
-                onClick={() => onChange({ ...filter, maxWalkMinutes: v })}
-                className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                  active
-                    ? "bg-gray-800 text-white"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}
-              >
-                {v === null ? "制限なし" : `〜${v}分`}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* ハザードマップ */}
       <div className="flex items-center gap-1.5">
@@ -231,30 +196,55 @@ export default function FilterPanel({ filter, onChange }: Props) {
         </button>
       </div>
 
-      {/* 価格帯 */}
+      {/* 価格帯（折りたたみ） */}
       <div className="flex items-center gap-1.5 sm:ml-auto">
-        <span className="text-xs font-medium text-gray-500 whitespace-nowrap">価格帯</span>
-        <div className="flex gap-1">
-          {(filter.displayMode === "sqm" ? PRICE_RANGES_SQM : PRICE_RANGES).map((range) => {
-            const active = filter.visiblePriceRanges.has(range.key);
-            return (
-              <button
-                key={range.key}
-                onClick={() => togglePriceRange(range.key)}
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
-                  active ? "text-white shadow-sm" : "bg-gray-100 text-gray-400"
-                }`}
-                style={active ? { backgroundColor: range.color } : undefined}
-              >
+        <button
+          onClick={() => setPriceRangeOpen((v) => !v)}
+          className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap"
+        >
+          <span>価格帯</span>
+          {/* アクティブな色ドット */}
+          <span className="flex gap-0.5 ml-0.5">
+            {(filter.displayMode === "sqm" ? PRICE_RANGES_SQM : PRICE_RANGES).map((range) =>
+              filter.visiblePriceRanges.has(range.key) ? (
                 <span
-                  className="inline-block h-2 w-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: range.color, opacity: active ? 1 : 0.4 }}
+                  key={range.key}
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ backgroundColor: range.color }}
                 />
-                {range.label}
-              </button>
-            );
-          })}
-        </div>
+              ) : null
+            )}
+          </span>
+          <svg
+            className={`w-3 h-3 transition-transform ${priceRangeOpen ? "rotate-180" : ""}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {priceRangeOpen && (
+          <div className="flex gap-1">
+            {(filter.displayMode === "sqm" ? PRICE_RANGES_SQM : PRICE_RANGES).map((range) => {
+              const active = filter.visiblePriceRanges.has(range.key);
+              return (
+                <button
+                  key={range.key}
+                  onClick={() => togglePriceRange(range.key)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
+                    active ? "text-white shadow-sm" : "bg-gray-100 text-gray-400"
+                  }`}
+                  style={active ? { backgroundColor: range.color } : undefined}
+                >
+                  <span
+                    className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: range.color, opacity: active ? 1 : 0.4 }}
+                  />
+                  {range.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

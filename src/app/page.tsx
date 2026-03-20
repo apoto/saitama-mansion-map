@@ -78,6 +78,19 @@ export default function Home() {
       const saved = localStorage.getItem("favorites");
       if (saved) setFavorites(new Set(JSON.parse(saved)));
     } catch {}
+    // お気に入り自動提案キャッシュを復元（H-01）
+    try {
+      const raw = localStorage.getItem("favorites_suggest_cache");
+      if (raw) {
+        const { data, query, ts } = JSON.parse(raw);
+        const TTL = 24 * 60 * 60 * 1000;
+        if (Date.now() - ts < TTL && data && query) {
+          setSuggestQuery(query);
+          setSuggestResult(data);
+          setHighlightedStations(new Set((data.stations as { stationCode: string }[]).map((s) => s.stationCode)));
+        }
+      }
+    } catch {}
   }, []);
 
   // お気に入りの追加・削除（G-23）
@@ -253,6 +266,7 @@ export default function Home() {
         onClose={() => setCrossPrefOpen(false)}
         defaultPrefecture={selectedPrefecture}
         defaultBudget={filter.budgetMax}
+        defaultArea={filter.targetArea}
         onSelectStation={(station) => {
           setSelectedStation(station);
           setCrossPrefOpen(false);
@@ -270,6 +284,7 @@ export default function Home() {
         }}
         onHighlight={setHighlightedStations}
         stations={stations}
+        targetArea={filter.targetArea}
         initialQuery={suggestQuery}
         initialResult={suggestResult}
         onResultChange={(q, r) => { setSuggestQuery(q); setSuggestResult(r); }}
